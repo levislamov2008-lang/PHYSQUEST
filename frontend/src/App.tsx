@@ -38,6 +38,25 @@ const normalize = (s: string) =>
     .replace(/[.,!?;:]/g, '')
     .trim()
 
+const textListKeywords = [
+  ['проветрен', 'свежем воздух', 'воздух'],
+  ['10', '15', 'минут', 'длительност'],
+  ['постепенн', 'нагрузк', 'прост', 'сложн'],
+  ['основн', 'мышечн', 'групп'],
+  ['вводн', 'основн', 'заключительн', 'част'],
+  ['возрастн', 'особенност', 'учащ'],
+  ['дыхани', 'дыхательн', 'контрол']
+]
+const getTextListMatches = (value: unknown) => {
+  const lines = String(value ?? '').split(/\r?\n/).map(line => normalize(line).replace(/^\s*\d+[.)-]?\s*/, '')).filter(Boolean)
+  return textListKeywords.filter((keywords, i) => {
+    const line = lines[i] ?? ''
+    if (!line) return false
+    const hits = keywords.filter(keyword => line.includes(normalize(keyword))).length
+    return hits >= (i === 0 || i === 1 ? 1 : 2)
+  }).length
+}
+
 export default function App() {
   const [started, setStarted] = useState(false)
   const [index, setIndex] = useState(0)
@@ -65,9 +84,7 @@ export default function App() {
       }
 
       if (item.type === 'textList') {
-        const typed = String(v ?? '').split(/\r?\n|;/).map((part: string) => normalize(part)).filter(Boolean)
-        const matches = (item.answers ?? []).filter((answer: string) => typed.some((part: string) => part.includes(normalize(answer))))
-        return n + (matches.length >= 5 ? 1 : 0)
+        return n + (getTextListMatches(v) >= 5 ? 1 : 0)
       }
 
       if (item.type === 'text' || item.type === 'number') {
@@ -109,9 +126,7 @@ export default function App() {
     }
 
     if (q.type === 'textList') {
-      const typed = String(current).split(/\r?\n|;/).map((part: string) => normalize(part)).filter(Boolean)
-      const matches = (q.answers ?? []).filter((answer: string) => typed.some((part: string) => part.includes(normalize(answer))))
-      return matches.length >= 5
+      return getTextListMatches(current) >= 5
     }
     if (q.type === 'long' || q.type === 'text' || q.type === 'number') {
       return String(current).trim().length > 0
@@ -247,11 +262,10 @@ export default function App() {
   if (reviewing) {
     const item = allQuestions[reviewIndex]
     const value = answers[item.id]
-    const typedParts = String(value ?? '').split(/\r?\n|;/).map((part: string) => normalize(part)).filter(Boolean)
-    const matchedList = item.type === 'textList' ? (item.answers ?? []).filter((answer: string) => typedParts.some((part: string) => part.includes(normalize(answer)))) : []
-    const isCorrect = item.type === 'single' || item.type === 'image' ? value === item.a : item.type === 'text' || item.type === 'number' ? normalize(String(value ?? '')) === normalize(String(item.a ?? '')) : item.type === 'textList' ? matchedList.length >= 5 : item.type === 'match' || item.type === 'order' ? JSON.stringify(value) === JSON.stringify(item.a) : false
+    const matchedList = item.type === 'textList' ? getTextListMatches(value) : 0
+    const isCorrect = item.type === 'single' || item.type === 'image' ? value === item.a : item.type === 'text' || item.type === 'number' ? normalize(String(value ?? '')) === normalize(String(item.a ?? '')) : item.type === 'textList' ? matchedList >= 5 : item.type === 'match' || item.type === 'order' ? JSON.stringify(value) === JSON.stringify(item.a) : false
     const answerText = value === undefined || value === '' ? 'Ответ не дан' : item.type === 'single' || item.type === 'image' ? item.opts?.[value] ?? 'Ответ не распознан' : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? value?.[i] ?? '—' : item.choices?.[Number(value?.[i])] ?? '—'}`).join('\\n') : item.type === 'order' ? (value as number[]).map((n, i) => `${i + 1}. ${item.items[n]}`).join('\\n') : String(value)
-    const correctText = item.type === 'single' || item.type === 'image' ? item.opts?.[item.a] ?? '—' : item.type === 'text' || item.type === 'number' ? String(item.a ?? '—') : item.type === 'textList' ? (item.answers ?? []).map((answer: string) => `• ${answer}`).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? item.a[i] : item.choices?.[Number(item.a[i])]}`).join('\\n') : item.type === 'order' ? item.a.map((n: number, i: number) => `${i + 1}. ${item.items[n]}`).join('\\n') : '—'
+    const correctText = item.type === 'single' || item.type === 'image' ? item.opts?.[item.a] ?? '—' : item.type === 'text' || item.type === 'number' ? String(item.a ?? '—') : item.type === 'textList' ? (item.answers ?? []).map((answer: string, i: number) => `${i + 1}. ${answer}`).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? item.a[i] : item.choices?.[Number(item.a[i])]}`).join('\\n') : item.type === 'order' ? item.a.map((n: number, i: number) => `${i + 1}. ${item.items[n]}`).join('\\n') : '—'
     return (
       <main className="app-shell review-shell">
         <header className="topbar">
@@ -265,7 +279,7 @@ export default function App() {
             <div className="review-card-head"><span>ВОПРОС {String(reviewIndex + 1).padStart(2, '0')}</span><b>{isCorrect ? 'ВЕРНО' : 'НЕВЕРНО'}</b></div>
             <h2>{item.q}</h2>
             <div className="review-answer-grid"><div><small>ТВОЙ ОТВЕТ</small><p>{answerText}</p></div><div><small>ПРАВИЛЬНЫЙ ОТВЕТ</small><p>{correctText}</p></div></div>
-            {item.type === 'textList' && <p className="review-match-count">НАЙДЕНО ПРАВИЛЬНЫХ ПУНКТОВ: {matchedList.length} ИЗ 7 · ДЛЯ ЗАСЧЁТА НУЖНО 5</p>}
+            {item.type === 'textList' && <p className="review-match-count">НАЙДЕНО ПРАВИЛЬНЫХ ПУНКТОВ: {matchedList} ИЗ 7 · ДЛЯ ЗАСЧЁТА НУЖНО 5</p>}
             {item.id === 28 && <div className="review-targets">{targetImages.map(target => <div key={target.label}><img src={target.src} alt={target.name}/><span>{target.label} · {target.name}</span></div>)}</div>}
           </article>
           <div className="review-navigation">
@@ -391,30 +405,52 @@ export default function App() {
         <div className="main-progress-fill" style={{ width: `${progress}%` }} />
       </div>
 
-      <section className="quiz-content quiz-content-with-mascot">
-        <div className={`phys-mascot-wrap ${current !== undefined ? 'mascot-active' : ''}`}>
-          <div className="mascot-speech">{current !== undefined ? 'Отлично! Так держать!' : 'Вперёд! У тебя получится!'}</div>
-          <svg className="phys-mascot" viewBox="0 0 240 340" role="img" aria-label="Спортивный персонаж PHYSQUEST">
-            <ellipse cx="120" cy="326" rx="67" ry="10" fill="#000" opacity=".25"/>
-            <path d="M92 245 L82 294 L105 302 L120 260 L137 302 L160 294 L148 244Z" fill="#d99a6c" stroke="#895b42" strokeWidth="3"/>
-            <path d="M79 290 L108 296 L105 315 Q83 323 65 310Z M139 296 L166 286 L183 306 Q164 323 140 315Z" fill="#151c17"/>
-            <path d="M63 307 Q86 317 108 309 L112 324 Q91 338 61 324Z M145 310 Q167 314 183 300 L198 317 Q179 337 146 326Z" fill="#eef1e9" stroke="#aab3a7" strokeWidth="2"/>
-            <path d="M82 165 Q120 146 158 165 L168 253 Q121 275 72 253Z" fill="#222b24" stroke="#101510" strokeWidth="4"/>
-            <path d="M89 170 Q120 158 151 171 L155 231 Q120 247 85 231Z" fill="#a8e83c" stroke="#5c8c21" strokeWidth="3"/>
-            <path d="M101 181 L120 194 L139 181 L134 214 L120 225 L106 214Z" fill="#172019"/><text x="120" y="208" textAnchor="middle" fontSize="13" fontWeight="900" fill="#b6f542">PQ</text>
-            <path d="M82 174 Q59 177 52 207 L39 242 Q36 257 49 262 Q60 265 67 248 L93 215Z M158 174 Q181 177 188 207 L201 242 Q204 257 191 262 Q180 265 173 248 L147 215Z" fill="#d99a6c" stroke="#895b42" strokeWidth="3"/>
-            <path d="M37 240 Q25 232 19 244 Q14 256 28 266 L46 269 Q57 260 49 249Z M203 240 Q215 232 221 244 Q226 256 212 266 L194 269 Q183 260 191 249Z" fill="#d99a6c"/>
-            <path d="M91 166 Q120 151 149 166 L155 181 Q120 195 85 181Z" fill="#172019"/>
-            <path d="M91 91 Q88 48 120 43 Q158 43 164 88 L158 133 Q149 158 120 160 Q93 151 86 127Z" fill="#e9b184" stroke="#9c6546" strokeWidth="3"/>
-            <path d="M85 103 Q70 63 100 35 Q130 11 159 36 Q180 56 164 105 L153 80 Q128 93 103 76 L96 111Z" fill="#242b26"/>
-            <path d="M92 69 Q123 44 165 65 L171 81 Q134 72 98 91Z" fill="#b6f542"/>
-            <path d="M101 113 Q110 105 118 113 M136 113 Q145 105 153 113" stroke="#382820" strokeWidth="4" fill="none" strokeLinecap="round"/>
-            <ellipse cx="110" cy="121" rx="5" ry="7" fill="#182019"/><ellipse cx="144" cy="121" rx="5" ry="7" fill="#182019"/>
-            <path d="M123 124 L118 137 L127 139 M108 148 Q124 159 143 146" stroke="#89513c" strokeWidth="3" fill="none" strokeLinecap="round"/>
-            <path d="M88 112 Q78 130 91 147 M161 111 Q174 129 158 148" stroke="#9c6546" strokeWidth="3" fill="none"/>
+      <section className="quiz-content quiz-layout">
+        <aside className={`mascot-side mascot-pose-${index % 4} ${current !== undefined ? 'mascot-active' : ''}`} aria-label="Помощник PHYSQUEST">
+          <div className="mascot-bubble">{['Ты справишься!', 'Отличный темп!', 'Не сдавайся!', 'Ещё один шаг!'][index % 4]}</div>
+          <svg className="phys-mascot" viewBox="0 0 220 330" role="img" aria-label="Спортивный маскот PHYSQUEST">
+            <defs>
+              <linearGradient id="skinTone" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#ffd9b4"/><stop offset="1" stopColor="#d99568"/></linearGradient>
+              <linearGradient id="greenJersey" x1="0" y1="0" x2="0.9" y2="1"><stop stopColor="#d0ff75"/><stop offset="1" stopColor="#75b92c"/></linearGradient>
+              <linearGradient id="darkShorts" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#303a32"/><stop offset="1" stopColor="#111713"/></linearGradient>
+              <radialGradient id="faceLight" cx="35%" cy="25%" r="80%"><stop stopColor="#ffe6ca"/><stop offset="1" stopColor="#d99b70"/></radialGradient>
+              <filter id="softShadow" x="-30%" y="-20%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
+            </defs>
+            <ellipse cx="110" cy="315" rx="58" ry="9" fill="#000" opacity=".2" filter="url(#softShadow)"/>
+            <g className="mascot-legs">
+              <path d="M82 238 Q105 249 119 242 L112 286 Q108 301 94 300 L80 296Z M119 242 Q139 248 151 237 L150 291 Q148 302 134 301 L119 296Z" fill="url(#skinTone)"/>
+              <path d="M76 286 Q94 295 113 287 L111 306 Q92 315 71 304 Q65 298 76 286Z M119 288 Q138 295 154 284 L164 302 Q149 315 122 306Z" fill="#18211a"/>
+              <path d="M70 301 Q92 311 112 301 L117 315 Q97 326 67 316 Q60 310 70 301Z M125 302 Q147 307 163 295 L175 309 Q158 327 128 318Z" fill="#f0f2eb"/>
+              <path d="M76 307 Q94 313 111 306 M132 309 Q149 313 165 301" stroke="#a8e83c" strokeWidth="4" fill="none"/>
+            </g>
+            <g className="mascot-torso">
+              <path d="M74 151 Q110 132 147 151 L163 243 Q112 263 58 243Z" fill="url(#darkShorts)"/>
+              <path d="M79 158 Q110 145 143 158 L149 225 Q111 243 72 225Z" fill="url(#greenJersey)" stroke="#639b25" strokeWidth="2"/>
+              <path d="M94 164 Q110 176 127 164 L135 192 L110 207 L86 192Z" fill="#1b261d"/>
+              <path d="M92 214 Q110 222 130 214" stroke="#e7ffc0" strokeWidth="3" opacity=".75" fill="none"/>
+              <path d="M104 184 L110 189 L116 184 L114 199 L110 203 L106 199Z" fill="#b9f65a"/>
+              <text x="110" y="196" textAnchor="middle" fontSize="8" fontWeight="900" fill="#1a241b">P</text>
+            </g>
+            <g className="mascot-arms">
+              <path d="M76 164 Q60 168 57 190 L48 229 Q45 243 56 246 Q67 249 72 235 L91 194Z M145 164 Q161 168 164 190 L173 229 Q176 243 165 246 Q154 249 149 235 L130 194Z" fill="url(#skinTone)"/>
+              <path d="M48 229 Q38 228 38 239 Q39 250 53 252 L63 246 L58 234Z M173 229 Q183 228 183 239 Q182 250 168 252 L158 246 L163 234Z" fill="url(#skinTone)"/>
+              <path d="M65 178 L76 183 L71 201 L59 197Z M155 178 L144 183 L149 201 L161 197Z" fill="#1b261d"/>
+            </g>
+            <g className="mascot-head">
+              <path d="M75 83 Q76 43 110 39 Q148 39 149 84 L145 123 Q138 151 110 154 Q82 150 75 122Z" fill="url(#faceLight)" stroke="#c8875c" strokeWidth="1.5"/>
+              <path d="M74 92 Q61 62 83 38 Q105 15 135 30 Q158 41 153 84 Q144 72 133 64 Q111 80 84 72 L80 104Z" fill="#292f2a"/>
+              <path d="M81 54 Q98 29 127 37" stroke="#4c574d" strokeWidth="7" strokeLinecap="round" fill="none"/>
+              <path d="M88 103 Q97 96 104 103 M118 103 Q126 96 134 103" stroke="#382820" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+              <ellipse cx="97" cy="111" rx="4.5" ry="6" fill="#202820"/><ellipse cx="126" cy="111" rx="4.5" ry="6" fill="#202820"/>
+              <circle cx="98.5" cy="109" r="1.5" fill="#fff"/><circle cx="127.5" cy="109" r="1.5" fill="#fff"/>
+              <path d="M111 113 L107 126 L114 128" stroke="#b47752" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+              <path d="M97 137 Q111 146 125 136" stroke="#8c493d" strokeWidth="3" fill="none" strokeLinecap="round"/>
+              <path d="M75 108 Q69 125 83 139 M147 108 Q153 125 139 139" stroke="#c8875c" strokeWidth="2" fill="none"/>
+              <ellipse cx="85" cy="126" rx="7" ry="4" fill="#f39a8b" opacity=".35"/><ellipse cx="136" cy="126" rx="7" ry="4" fill="#f39a8b" opacity=".35"/>
+            </g>
           </svg>
-          <span className="mascot-name">PULSE <i>· PHYSQUEST</i></span>
-        </div>
+        </aside>
+        <div className="question-main">
         <div className="question-heading">
           <div>
             <div className="eyebrow">
@@ -588,9 +624,23 @@ export default function App() {
 
         {q.type === 'textList' && (
           <div className="input-section text-list-section">
-            <label>ВВЕДИ НЕ МЕНЕЕ ПЯТИ ТРЕБОВАНИЙ</label>
-            <textarea className="answer-input long-input" placeholder="Напиши каждый пункт с новой строки..." value={current ?? ''} onChange={e => setAnswer(e.target.value)} />
-            <p className="input-hint">КАЖДЫЙ ПУНКТ — С НОВОЙ СТРОКИ. НУЖНО НЕ МЕНЕЕ 5 ПРАВИЛЬНЫХ ПУНКТОВ.</p>
+            <label>ЗАПОЛНИ НЕ МЕНЕЕ ПЯТИ ПУНКТОВ</label>
+            <div className="numbered-answer-list">
+              {Array.from({ length: 7 }, (_, i) => (String(current ?? '').split(/\r?\n/)[i] ?? '')).map((line, i) => (
+                <div className="numbered-answer-row" key={i}>
+                  <span>{i + 1}</span>
+                  <input className="answer-input" aria-label={`Требование ${i + 1}`} placeholder={`Пункт ${i + 1}...`} value={line}
+                    onChange={e => {
+                      const values = String(current ?? '').split(/\r?\n/)
+                      values[i] = e.target.value
+                      setAnswer(values.join('\n'))
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="input-hint">ВПИШИ ОТВЕТЫ В НУМЕРОВАННЫЕ СТРОКИ. МОЖНО СВОИМИ СЛОВАМИ. ДЛЯ ПЕРЕХОДА НУЖНО ЗАПОЛНИТЬ МИНИМУМ 5 СТРОК.</p>
+            <p className="text-list-counter">ЗАПОЛНЕНО: {String(current ?? '').split(/\r?\n/).filter((line: string) => line.trim()).length} / 7</p>
           </div>
         )}
 
@@ -609,6 +659,7 @@ export default function App() {
             </p>
           </div>
         )}
+        </div>
       </section>
 
       <footer className="quiz-footer">
