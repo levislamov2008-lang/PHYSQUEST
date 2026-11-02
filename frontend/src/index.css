@@ -1487,3 +1487,187 @@ button:disabled {
   .numbered-answer-row > span { width:32px; height:34px; }
   .numbered-answer-row .answer-input { min-height:44px; font-size:12px; }
 }
+
+
+/* Big end-of-quest mascot celebration */
+.result-celebration {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 920px);
+  min-height: 370px;
+  margin: 8px auto 34px;
+  padding: 22px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(182,245,66,.16);
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 50% 58%, rgba(117,185,44,.17), rgba(21,29,22,.12) 48%, transparent 74%);
+}
+.celebration-glow {
+  position: absolute;
+  z-index: -1;
+  width: 340px;
+  height: 250px;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%,-50%);
+  border-radius: 50%;
+  background: rgba(182,245,66,.18);
+  filter: blur(65px);
+  animation: celebrationGlow 2.8s ease-in-out infinite;
+}
+.result-mascot-stage {
+  position: relative;
+  width: min(100%, 360px);
+  height: 280px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: mascotVictoryEnter .9s cubic-bezier(.16,1.25,.35,1) both;
+}
+.result-phys-mascot {
+  position: relative;
+  z-index: 2;
+  width: 245px;
+  height: 100%;
+  overflow: visible;
+  transform-origin: 50% 95%;
+  filter: drop-shadow(0 18px 22px rgba(0,0,0,.42));
+  animation: mascotVictoryDance 2.2s .9s ease-in-out infinite;
+}
+.result-mascot-aura {
+  position: absolute;
+  z-index: 0;
+  bottom: 8px;
+  width: 230px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(182,245,66,.22);
+  filter: blur(24px);
+}
+.result-mascot-bubble {
+  position: absolute;
+  z-index: 4;
+  top: 2px;
+  left: 50%;
+  width: max-content;
+  max-width: min(330px, 88vw);
+  padding: 12px 17px;
+  border: 1px solid rgba(182,245,66,.48);
+  border-radius: 16px 16px 16px 4px;
+  color: #182019;
+  background: #c4ff61;
+  box-shadow: 0 9px 28px rgba(0,0,0,.3), 0 0 24px rgba(182,245,66,.15);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 900;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: bubblePop .55s .55s cubic-bezier(.2,1.4,.4,1) both;
+}
+.result-mascot-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 15px;
+  height: 15px;
+  background: #c4ff61;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2px;
+}
+.celebration-title {
+  position: relative;
+  z-index: 2;
+  margin-top: 7px;
+  color: #c5ff65;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(27px, 5vw, 42px);
+  font-weight: 1000;
+  line-height: 1;
+  letter-spacing: 1.5px;
+  text-align: center;
+  text-shadow: 0 0 28px rgba(182,245,66,.25);
+  animation: titlePunch .65s .85s cubic-bezier(.2,1.4,.4,1) both;
+}
+.celebration-subtitle {
+  position: relative;
+  z-index: 2;
+  margin: 9px 0 0;
+  color: #c1c9bf;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-align: center;
+  animation: fadeRise .6s 1.1s ease both;
+}
+.celebration-confetti {
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+.celebration-confetti i {
+  position: absolute;
+  top: -22px;
+  width: 7px;
+  height: 15px;
+  border-radius: 2px;
+  background: #b6f542;
+  opacity: 0;
+  animation: confettiFall 2.8s ease-in infinite;
+}
+.celebration-confetti i:nth-child(3n) { background: #f5f7ee; width: 5px; height: 10px; }
+.celebration-confetti i:nth-child(3n + 1) { background: #ffb84d; }
+.celebration-confetti i:nth-child(4n) { width: 10px; height: 6px; border-radius: 50%; }
+@keyframes mascotVictoryEnter {
+  0% { opacity: 0; transform: translateY(100px) scale(.55) rotate(-12deg); }
+  65% { opacity: 1; transform: translateY(-13px) scale(1.08) rotate(5deg); }
+  82% { transform: translateY(5px) scale(.98) rotate(-2deg); }
+  100% { transform: translateY(0) scale(1) rotate(0); }
+}
+@keyframes mascotVictoryDance {
+  0%,100% { transform: translateY(0) rotate(0); }
+  15% { transform: translateY(-12px) rotate(-5deg); }
+  30% { transform: translateY(0) rotate(5deg); }
+  45% { transform: translateY(-8px) rotate(-3deg); }
+  60% { transform: translateY(0) rotate(3deg); }
+}
+@keyframes bubblePop {
+  from { opacity: 0; transform: translate(-50%,12px) scale(.65); }
+  to { opacity: 1; transform: translate(-50%,0) scale(1); }
+}
+@keyframes titlePunch {
+  from { opacity: 0; transform: scale(.55); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes confettiFall {
+  0% { opacity: 0; transform: translateY(-15px) rotate(0deg); }
+  12% { opacity: .95; }
+  100% { opacity: 0; transform: translateY(410px) rotate(620deg); }
+}
+@keyframes celebrationGlow {
+  0%,100% { opacity: .55; scale: .9; }
+  50% { opacity: 1; scale: 1.12; }
+}
+@media (max-width: 600px) {
+  .result-celebration { min-height: 315px; padding: 15px 8px; margin-bottom: 24px; }
+  .result-mascot-stage { height: 235px; }
+  .result-phys-mascot { width: 205px; }
+  .result-mascot-bubble { font-size: 11px; padding: 10px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .result-celebration *, .result-celebration *::before, .result-celebration *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
