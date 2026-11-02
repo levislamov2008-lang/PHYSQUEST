@@ -339,7 +339,7 @@ export default function App() {
           <div className="result-celebration" role="status">
             <div className="celebration-glow" />
             <div className="celebration-confetti" aria-hidden="true">
-              {Array.from({ length: 22 }, (_, i) => <i key={i} style={{ '--piece': i } as React.CSSProperties} />)}
+              {Array.from({ length: 22 }, (_, i) => <i key={i} style={{ left: `${(i * 37) % 100}%`, animationDelay: `${(i % 7) * -0.19}s`, rotate: `${i * 29}deg` }} />)}
             </div>
             <div className="result-mascot-stage">
               <div className="result-mascot-bubble">
