@@ -3,10 +3,23 @@ import { useMemo, useState } from 'react'
 import questions from './questions.json'
 import './index.css'
 import gymnastics from './assets/gymnastics.png'
+import biatlon from './assets/biatlon.jpeg'
+import luk from './assets/luk.jpg'
+import pulevaya from './assets/pulevaya.jpeg'
+import stand from './assets/stand.png'
+import darts from './assets/dartz.jpg'
 
 type Question = any
 
 const letters = ['А', 'Б', 'В', 'Г', 'Д']
+
+const targetImages = [
+  { label: 'А', name: 'Стендовая стрельба', src: stand },
+  { label: 'Б', name: 'Биатлон', src: biatlon },
+  { label: 'В', name: 'Дартс', src: darts },
+  { label: 'Г', name: 'Стрельба из лука', src: luk },
+  { label: 'Д', name: 'Пулевая стрельба', src: pulevaya }
+]
 
 const typeLabels: Record<string, string> = {
   single: 'ВЫБОР ОТВЕТА',
@@ -29,6 +42,8 @@ export default function App() {
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, any>>({})
   const [finished, setFinished] = useState(false)
+  const [reviewing, setReviewing] = useState(false)
+  const [activeMatch, setActiveMatch] = useState<number | null>(null)
 
   const allQuestions = questions as Question[]
   const total = allQuestions.length
@@ -107,13 +122,13 @@ export default function App() {
     setAnswers({})
     setIndex(0)
     setFinished(false)
+    setReviewing(false)
     setStarted(false)
   }
 
   const reviewAnswers = () => {
-    setStarted(true)
+    setReviewing(true)
     setFinished(false)
-    setIndex(0)
   }
 
   if (!started) {
@@ -210,6 +225,56 @@ export default function App() {
           <span>PHYSQUEST © 2026</span>
           <span>TRAIN YOUR MIND. TRAIN YOUR BODY.</span>
         </footer>
+      </main>
+    )
+  }
+
+  if (reviewing) {
+    const isCorrect = (item: Question) => {
+      const value = answers[item.id]
+      if (item.type === 'single' || item.type === 'image') return value === item.a
+      if (item.type === 'text' || item.type === 'number') return normalize(String(value ?? '')) === normalize(String(item.a ?? ''))
+      if (item.type === 'match' || item.type === 'order') return JSON.stringify(value) === JSON.stringify(item.a)
+      return false
+    }
+    const answerText = (item: Question) => {
+      const value = answers[item.id]
+      if (value === undefined || value === '') return 'Ответ не дан'
+      if (item.type === 'single' || item.type === 'image') return item.opts?.[value] ?? 'Ответ не распознан'
+      if (item.type === 'text' || item.type === 'number' || item.type === 'long') return String(value)
+      if (item.type === 'match') return item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? value?.[i] ?? '—' : item.choices?.[Number(value?.[i])] ?? '—'}`).join('\n')
+      if (item.type === 'order') return (value as number[]).map((n, i) => `${i + 1}. ${item.items[n]}`).join('\n')
+      return String(value)
+    }
+    const correctText = (item: Question) => {
+      if (item.type === 'single' || item.type === 'image') return item.opts?.[item.a] ?? '—'
+      if (item.type === 'text' || item.type === 'number') return String(item.a ?? '—')
+      if (item.type === 'match') return item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? item.a[i] : item.choices?.[Number(item.a[i])]}`).join('\n')
+      if (item.type === 'order') return item.a.map((n: number, i: number) => `${i + 1}. ${item.items[n]}`).join('\n')
+      if (item.type === 'long') return (item.answers ?? []).join('\n• ')
+      return '—'
+    }
+    return (
+      <main className="app-shell review-shell">
+        <header className="topbar">
+          <div className="brand"><div className="brand-icon">P</div><div className="brand-text"><b>PHYS<span>QUEST</span></b><small>РАЗБОР ОТВЕТОВ</small></div></div>
+          <button className="secondary-button" onClick={() => { setReviewing(false); setFinished(true) }}>К РЕЗУЛЬТАТАМ</button>
+        </header>
+        <section className="review-content">
+          <div className="eyebrow"><span className="eyebrow-line" />РАЗБОР ТРЕНИРОВКИ</div>
+          <h1 className="review-title">ТВОИ <span>ОТВЕТЫ.</span></h1>
+          {allQuestions.map((item: Question, i: number) => {
+            const correct = isCorrect(item)
+            const manual = item.type === 'long'
+            return <article className={`review-card ${manual ? 'review-manual' : correct ? 'review-correct' : 'review-wrong'}`} key={item.id}>
+              <div className="review-card-head"><span>ВОПРОС {String(i + 1).padStart(2, '0')}</span><b>{manual ? 'ТРЕБУЕТ ПРОВЕРКИ' : correct ? 'ВЕРНО' : 'НЕВЕРНО'}</b></div>
+              <h2>{item.q}</h2>
+              <div className="review-answer-grid"><div><small>ТВОЙ ОТВЕТ</small><p>{answerText(item)}</p></div>{!manual && <div><small>ПРАВИЛЬНЫЙ ОТВЕТ</small><p>{correctText(item)}</p></div>}</div>
+              {item.id === 28 && <div className="review-targets">{targetImages.map(target => <div key={target.label}><img src={target.src} alt={target.name}/><span>{target.label} · {target.name}</span></div>)}</div>}
+            </article>
+          })}
+          <button className="primary-button" onClick={() => { setReviewing(false); setFinished(true) }}>ВЕРНУТЬСЯ К РЕЗУЛЬТАТАМ ↗</button>
+        </section>
       </main>
     )
   }
@@ -387,7 +452,32 @@ export default function App() {
           </div>
         )}
 
-        {q.type === 'match' && (
+        {q.type === 'match' && q.id === 28 && (
+          <div className="target-match-wrap">
+            <p className="input-hint">НАЖМИ НА ВИД СТРЕЛЬБЫ СЛЕВА, ЗАТЕМ НА НУЖНУЮ МИШЕНЬ СПРАВА. СВЯЗИ МОЖНО МЕНЯТЬ ДО ОТПРАВКИ.</p>
+            <div className="target-match-board">
+              <svg className="target-match-lines" viewBox="0 0 1000 500" preserveAspectRatio="none" aria-hidden="true">
+                {(current ?? []).map((label: string, i: number) => {
+                  const j = targetImages.findIndex(target => target.label === label)
+                  return j < 0 ? null : <line key={`${i}-${label}`} x1="340" y1={50 + i * 100} x2="660" y2={50 + j * 100} />
+                })}
+              </svg>
+              <div className="target-match-sources">{q.pairs.map((pair: string[], i: number) => <button key={i} className={`target-source ${activeMatch === i ? 'active' : ''} ${current?.[i] ? 'connected' : ''}`} onClick={() => setActiveMatch(i)}><span>{String(i + 1).padStart(2, '0')}</span><b>{pair[0]}</b><small>{current?.[i] ? `МИШЕНЬ ${current[i]}` : 'ВЫБРАТЬ'}</small></button>)}</div>
+              <div className="target-match-choices">{targetImages.map(target => <button key={target.label} className={`target-choice ${activeMatch !== null && current?.[activeMatch] === target.label ? 'chosen' : ''} ${current?.includes(target.label) ? 'used' : ''}`} onClick={() => {
+                if (activeMatch === null) return
+                const next = [...(current ?? Array(q.pairs.length).fill(''))]
+                const previous = next.findIndex((value: string) => value === target.label)
+                if (previous !== -1 && previous !== activeMatch) next[previous] = ''
+                next[activeMatch] = target.label
+                setAnswer(next)
+                setActiveMatch(null)
+              }}><span className="target-label">{target.label}</span><img src={target.src} alt={target.name}/><small>{target.name}</small></button>)}</div>
+            </div>
+            <button className="reset-order" onClick={() => { setAnswer(Array(q.pairs.length).fill('')); setActiveMatch(null) }}>↻ СБРОСИТЬ СВЯЗИ</button>
+          </div>
+        )}
+
+        {q.type === 'match' && q.id !== 28 && (
           <div className="match-list">
             {q.pairs.map((pair: string[], i: number) => (
               <div className="match-row" key={i}>
