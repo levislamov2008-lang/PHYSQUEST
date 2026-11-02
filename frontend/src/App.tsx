@@ -28,7 +28,7 @@ const typeLabels: Record<string, string> = {
   match: 'СООТВЕТСТВИЕ',
   order: 'ПОРЯДОК ДЕЙСТВИЙ',
   long: 'РАЗВЁРНУТЫЙ ОТВЕТ',
-  textList: 'ВВЕДИ НЕ МЕНЕЕ ПЯТИ ПУНКТОВ',
+  multi: 'ВЫБЕРИ ПРАВИЛЬНЫЕ ВАРИАНТЫ',
   number: 'РАСЧЁТ'
 }
 
@@ -83,6 +83,9 @@ export default function App() {
         return n + (v === item.a ? 1 : 0)
       }
 
+      if (item.type === 'multi') {
+        return n + (Array.isArray(v) && v.length >= 5 && v.every((choice: number) => item.a.includes(choice)) ? 1 : 0)
+      }
       if (item.type === 'textList') {
         return n + (getTextListMatches(v) >= 5 ? 1 : 0)
       }
@@ -125,6 +128,9 @@ export default function App() {
       return Array.isArray(current) && current.length > 0
     }
 
+    if (q.type === 'multi') {
+      return Array.isArray(current) && current.length >= 5
+    }
     if (q.type === 'textList') {
       return getTextListMatches(current) >= 5
     }
@@ -263,9 +269,9 @@ export default function App() {
     const item = allQuestions[reviewIndex]
     const value = answers[item.id]
     const matchedList = item.type === 'textList' ? getTextListMatches(value) : 0
-    const isCorrect = item.type === 'single' || item.type === 'image' ? value === item.a : item.type === 'text' || item.type === 'number' ? normalize(String(value ?? '')) === normalize(String(item.a ?? '')) : item.type === 'textList' ? matchedList >= 5 : item.type === 'match' || item.type === 'order' ? JSON.stringify(value) === JSON.stringify(item.a) : false
-    const answerText = value === undefined || value === '' ? 'Ответ не дан' : item.type === 'single' || item.type === 'image' ? item.opts?.[value] ?? 'Ответ не распознан' : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? value?.[i] ?? '—' : item.choices?.[Number(value?.[i])] ?? '—'}`).join('\\n') : item.type === 'order' ? (value as number[]).map((n, i) => `${i + 1}. ${item.items[n]}`).join('\\n') : String(value)
-    const correctText = item.type === 'single' || item.type === 'image' ? item.opts?.[item.a] ?? '—' : item.type === 'text' || item.type === 'number' ? String(item.a ?? '—') : item.type === 'textList' ? (item.answers ?? []).map((answer: string, i: number) => `${i + 1}. ${answer}`).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? item.a[i] : item.choices?.[Number(item.a[i])]}`).join('\\n') : item.type === 'order' ? item.a.map((n: number, i: number) => `${i + 1}. ${item.items[n]}`).join('\\n') : '—'
+    const isCorrect = item.type === 'single' || item.type === 'image' ? value === item.a : item.type === 'text' || item.type === 'number' ? normalize(String(value ?? '')) === normalize(String(item.a ?? '')) : item.type === 'multi' ? Array.isArray(value) && value.length >= 5 && value.every((choice: number) => item.a.includes(choice)) : item.type === 'textList' ? matchedList >= 5 : item.type === 'match' || item.type === 'order' ? JSON.stringify(value) === JSON.stringify(item.a) : false
+    const answerText = value === undefined || value === '' ? 'Ответ не дан' : item.type === 'single' || item.type === 'image' ? item.opts?.[value] ?? 'Ответ не распознан' : item.type === 'multi' ? (value as number[]).map((n) => item.opts[n]).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? value?.[i] ?? '—' : item.choices?.[Number(value?.[i])] ?? '—'}`).join('\\n') : item.type === 'order' ? (value as number[]).map((n, i) => `${i + 1}. ${item.items[n]}`).join('\\n') : String(value)
+    const correctText = item.type === 'single' || item.type === 'image' ? item.opts?.[item.a] ?? '—' : item.type === 'multi' ? item.a.map((n: number) => item.opts[n]).join('\\n') : item.type === 'text' || item.type === 'number' ? String(item.a ?? '—') : item.type === 'textList' ? (item.answers ?? []).map((answer: string, i: number) => `${i + 1}. ${answer}`).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? item.a[i] : item.choices?.[Number(item.a[i])]}`).join('\\n') : item.type === 'order' ? item.a.map((n: number, i: number) => `${i + 1}. ${item.items[n]}`).join('\\n') : '—'
     return (
       <main className="app-shell review-shell">
         <header className="topbar">
@@ -622,25 +628,26 @@ export default function App() {
           </div>
         )}
 
-        {q.type === 'textList' && (
-          <div className="input-section text-list-section">
-            <label>ЗАПОЛНИ НЕ МЕНЕЕ ПЯТИ ПУНКТОВ</label>
-            <div className="numbered-answer-list">
-              {Array.from({ length: 7 }, (_, i) => (String(current ?? '').split(/\r?\n/)[i] ?? '')).map((line, i) => (
-                <div className="numbered-answer-row" key={i}>
-                  <span>{i + 1}</span>
-                  <input className="answer-input" aria-label={`Требование ${i + 1}`} placeholder={`Пункт ${i + 1}...`} value={line}
-                    onChange={e => {
-                      const values = String(current ?? '').split(/\r?\n/)
-                      values[i] = e.target.value
-                      setAnswer(values.join('\n'))
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-            <p className="input-hint">ВПИШИ ОТВЕТЫ В НУМЕРОВАННЫЕ СТРОКИ. МОЖНО СВОИМИ СЛОВАМИ. ДЛЯ ПЕРЕХОДА НУЖНО ЗАПОЛНИТЬ МИНИМУМ 5 СТРОК.</p>
-            <p className="text-list-counter">ЗАПОЛНЕНО: {String(current ?? '').split(/\r?\n/).filter((line: string) => line.trim()).length} / 7</p>
+        {q.type === 'multi' && (
+          <div className="order-list multi-choice-list">
+            <p className="input-hint">ОТМЕТЬ НЕ МЕНЕЕ ПЯТИ ПРАВИЛЬНЫХ ТРЕБОВАНИЙ. НЕВЕРНЫЕ ВАРИАНТЫ НЕ ВЫБИРАЙ.</p>
+            {q.opts.map((option: string, i: number) => {
+              const selected = (current ?? []).includes(i)
+              return (
+                <button
+                  type="button"
+                  key={i}
+                  className={`order-item ${selected ? 'selected' : ''}`}
+                  onClick={() => setAnswer(selected ? current.filter((x: number) => x !== i) : [...(current ?? []), i])}
+                >
+                  <span className="order-index">{selected ? '✓' : '+'}</span>
+                  <span>{option}</span>
+                  <span className="order-status">{selected ? 'ВЫБРАНО' : 'ВЫБРАТЬ'}</span>
+                </button>
+              )
+            })}
+            <p className="text-list-counter">ВЫБРАНО: {(current ?? []).length} · МИНИМУМ: 5</p>
+            <button className="reset-order" type="button" onClick={() => setAnswer([])}>↻ СБРОСИТЬ ВЫБОР</button>
           </div>
         )}
 
