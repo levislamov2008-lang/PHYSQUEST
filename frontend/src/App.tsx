@@ -336,6 +336,68 @@ export default function App() {
             и улучшать свой результат!
           </p>
 
+          <div className="result-celebration" role="status">
+            <div className="celebration-glow" />
+            <div className="celebration-confetti" aria-hidden="true">
+              {Array.from({ length: 22 }, (_, i) => <i key={i} style={{ '--piece': i } as React.CSSProperties} />)}
+            </div>
+            <div className="result-mascot-stage">
+              <div className="result-mascot-bubble">
+                {percentage >= 90
+                  ? 'ДААА! Вот это уровень! Ты настоящий чемпион!'
+                  : percentage >= 70
+                    ? 'Крутая работа! Ещё немного — и будет идеальный результат!'
+                    : percentage >= 40
+                      ? 'Ты справился! Тренируйся дальше — в следующий раз будет ещё круче!'
+                      : 'Главное — не сдаваться! Теперь ты знаешь, над чем поработать. Вперёд!'}
+              </div>
+              <div className="result-mascot-aura" />
+                        <svg className="phys-mascot result-phys-mascot" viewBox="0 0 220 330" role="img" aria-label="Спортивный маскот PHYSQUEST">
+            <defs>
+              <linearGradient id="skinTone" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#ffd9b4"/><stop offset="1" stopColor="#d99568"/></linearGradient>
+              <linearGradient id="greenJersey" x1="0" y1="0" x2="0.9" y2="1"><stop stopColor="#d0ff75"/><stop offset="1" stopColor="#75b92c"/></linearGradient>
+              <linearGradient id="darkShorts" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#303a32"/><stop offset="1" stopColor="#111713"/></linearGradient>
+              <radialGradient id="faceLight" cx="35%" cy="25%" r="80%"><stop stopColor="#ffe6ca"/><stop offset="1" stopColor="#d99b70"/></radialGradient>
+              <filter id="softShadow" x="-30%" y="-20%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
+            </defs>
+            <ellipse cx="110" cy="315" rx="58" ry="9" fill="#000" opacity=".2" filter="url(#softShadow)"/>
+            <g className="mascot-legs">
+              <path d="M82 238 Q105 249 119 242 L112 286 Q108 301 94 300 L80 296Z M119 242 Q139 248 151 237 L150 291 Q148 302 134 301 L119 296Z" fill="url(#skinTone)"/>
+              <path d="M76 286 Q94 295 113 287 L111 306 Q92 315 71 304 Q65 298 76 286Z M119 288 Q138 295 154 284 L164 302 Q149 315 122 306Z" fill="#18211a"/>
+              <path d="M70 301 Q92 311 112 301 L117 315 Q97 326 67 316 Q60 310 70 301Z M125 302 Q147 307 163 295 L175 309 Q158 327 128 318Z" fill="#f0f2eb"/>
+              <path d="M76 307 Q94 313 111 306 M132 309 Q149 313 165 301" stroke="#a8e83c" strokeWidth="4" fill="none"/>
+            </g>
+            <g className="mascot-torso">
+              <path d="M74 151 Q110 132 147 151 L163 243 Q112 263 58 243Z" fill="url(#darkShorts)"/>
+              <path d="M79 158 Q110 145 143 158 L149 225 Q111 243 72 225Z" fill="url(#greenJersey)" stroke="#639b25" strokeWidth="2"/>
+              <path d="M94 164 Q110 176 127 164 L135 192 L110 207 L86 192Z" fill="#1b261d"/>
+              <path d="M92 214 Q110 222 130 214" stroke="#e7ffc0" strokeWidth="3" opacity=".75" fill="none"/>
+              <path d="M104 184 L110 189 L116 184 L114 199 L110 203 L106 199Z" fill="#b9f65a"/>
+              <text x="110" y="196" textAnchor="middle" fontSize="8" fontWeight="900" fill="#1a241b">P</text>
+            </g>
+            <g className="mascot-arms">
+              <path d="M76 164 Q60 168 57 190 L48 229 Q45 243 56 246 Q67 249 72 235 L91 194Z M145 164 Q161 168 164 190 L173 229 Q176 243 165 246 Q154 249 149 235 L130 194Z" fill="url(#skinTone)"/>
+              <path d="M48 229 Q38 228 38 239 Q39 250 53 252 L63 246 L58 234Z M173 229 Q183 228 183 239 Q182 250 168 252 L158 246 L163 234Z" fill="url(#skinTone)"/>
+              <path d="M65 178 L76 183 L71 201 L59 197Z M155 178 L144 183 L149 201 L161 197Z" fill="#1b261d"/>
+            </g>
+            <g className="mascot-head">
+              <path d="M75 83 Q76 43 110 39 Q148 39 149 84 L145 123 Q138 151 110 154 Q82 150 75 122Z" fill="url(#faceLight)" stroke="#c8875c" strokeWidth="1.5"/>
+              <path d="M74 92 Q61 62 83 38 Q105 15 135 30 Q158 41 153 84 Q144 72 133 64 Q111 80 84 72 L80 104Z" fill="#292f2a"/>
+              <path d="M81 54 Q98 29 127 37" stroke="#4c574d" strokeWidth="7" strokeLinecap="round" fill="none"/>
+              <path d="M88 103 Q97 96 104 103 M118 103 Q126 96 134 103" stroke="#382820" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+              <ellipse cx="97" cy="111" rx="4.5" ry="6" fill="#202820"/><ellipse cx="126" cy="111" rx="4.5" ry="6" fill="#202820"/>
+              <circle cx="98.5" cy="109" r="1.5" fill="#fff"/><circle cx="127.5" cy="109" r="1.5" fill="#fff"/>
+              <path d="M111 113 L107 126 L114 128" stroke="#b47752" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+              <path d="M97 137 Q111 146 125 136" stroke="#8c493d" strokeWidth="3" fill="none" strokeLinecap="round"/>
+              <path d="M75 108 Q69 125 83 139 M147 108 Q153 125 139 139" stroke="#c8875c" strokeWidth="2" fill="none"/>
+              <ellipse cx="85" cy="126" rx="7" ry="4" fill="#f39a8b" opacity=".35"/><ellipse cx="136" cy="126" rx="7" ry="4" fill="#f39a8b" opacity=".35"/>
+            </g>
+          </svg>
+            </div>
+            <div className="celebration-title">УРА! ТЫ ЭТО СДЕЛАЛ!</div>
+            <p className="celebration-subtitle">28 заданий позади. Маскот гордится тобой!</p>
+          </div>
+
           <div className="result-dashboard">
             <div className="result-score">
               <span className="result-label">ТВОЙ РЕЗУЛЬТАТ</span>
