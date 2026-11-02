@@ -44,6 +44,7 @@ export default function App() {
   const [finished, setFinished] = useState(false)
   const [reviewing, setReviewing] = useState(false)
   const [activeMatch, setActiveMatch] = useState<number | null>(null)
+  const [activeChoiceRow, setActiveChoiceRow] = useState<number | null>(null)
 
   const allQuestions = questions as Question[]
   const total = allQuestions.length
@@ -471,7 +472,7 @@ export default function App() {
                 next[activeMatch] = target.label
                 setAnswer(next)
                 setActiveMatch(null)
-              }}><span className="target-label">{target.label}</span><img src={target.src} alt={target.name}/><small>{target.name}</small></button>)}</div>
+              }}><span className="target-label">{target.label}</span><img src={target.src} alt={target.name}/></button>)}</div>
             </div>
             <button className="reset-order" onClick={() => { setAnswer(Array(q.pairs.length).fill('')); setActiveMatch(null) }}>↻ СБРОСИТЬ СВЯЗИ</button>
           </div>
@@ -479,37 +480,51 @@ export default function App() {
 
         {q.type === 'match' && q.id !== 28 && (
           <div className="match-list">
-            {q.pairs.map((pair: string[], i: number) => (
-              <div className="match-row" key={i}>
-                <div className="match-name">
-                  <span>{String(i + 1).padStart(2, '0')}</span>
-                  <b>{pair[0]}</b>
-                </div>
-
-                <select
-                  value={current?.[i] ?? ''}
-                  onChange={e => {
-                    const next = [
-                      ...(current ?? Array(q.pairs.length).fill(''))
-                    ]
-
-                    next[i] = e.target.value
-                    setAnswer(next)
-                  }}
-                >
-                  <option value="">Выбери вариант</option>
-
-                  {(q.choices ?? letters).map((choice: string, j: number) => (
-                    <option
-                      key={j}
-                      value={q.id === 28 ? choice : String(j)}
+            <p className="input-hint">ВЫБЕРИ ПОДХОДЯЩИЙ ВАРИАНТ ДЛЯ КАЖДОЙ СТРОКИ</p>
+            {q.pairs.map((pair: string[], i: number) => {
+              const selectedValue = current?.[i] ?? ''
+              const selectedLabel = selectedValue === '' ? '' : (q.choices ?? letters)[Number(selectedValue)]
+              return (
+                <div className="match-row game-match-row" key={i}>
+                  <div className="match-name">
+                    <span>{String(i + 1).padStart(2, '0')}</span>
+                    <b>{pair[0]}</b>
+                  </div>
+                  <div className="match-picker">
+                    <button
+                      type="button"
+                      className={`match-picker-trigger ${selectedValue !== '' ? 'has-value' : ''} ${activeChoiceRow === i ? 'is-open' : ''}`}
+                      aria-expanded={activeChoiceRow === i}
+                      onClick={() => setActiveChoiceRow(activeChoiceRow === i ? null : i)}
                     >
-                      {choice}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
+                      <span>{selectedLabel || 'Выбрать ответ'}</span>
+                      <span className="picker-chevron">{activeChoiceRow === i ? '−' : '+'}</span>
+                    </button>
+                    {activeChoiceRow === i && (
+                      <div className="match-picker-menu">
+                        {(q.choices ?? letters).map((choice: string, j: number) => (
+                          <button
+                            type="button"
+                            key={j}
+                            className={`match-picker-option ${selectedValue === String(j) ? 'chosen' : ''}`}
+                            onClick={() => {
+                              const next = [...(current ?? Array(q.pairs.length).fill(''))]
+                              next[i] = String(j)
+                              setAnswer(next)
+                              setActiveChoiceRow(null)
+                            }}
+                          >
+                            <span className="picker-option-letter">{letters[j] ?? String(j + 1)}</span>
+                            <span>{choice}</span>
+                            {selectedValue === String(j) && <b>✓</b>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
