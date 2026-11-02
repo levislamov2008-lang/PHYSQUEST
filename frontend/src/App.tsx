@@ -65,8 +65,8 @@ export default function App() {
       }
 
       if (item.type === 'textList') {
-        const typed = String(v ?? '').split(/[\\n;,.]+/).map((part: string) => normalize(part)).filter(Boolean)
-        const matches = (item.answers ?? []).filter((answer: string) => typed.some((part: string) => part.includes(normalize(answer)) || normalize(answer).includes(part)))
+        const typed = String(v ?? '').split(/\r?\n|;/).map((part: string) => normalize(part)).filter(Boolean)
+        const matches = (item.answers ?? []).filter((answer: string) => typed.some((part: string) => part.includes(normalize(answer))))
         return n + (matches.length >= 5 ? 1 : 0)
       }
 
@@ -109,8 +109,8 @@ export default function App() {
     }
 
     if (q.type === 'textList') {
-      const typed = String(current).split(/[\\n;,.]+/).map((part: string) => normalize(part)).filter(Boolean)
-      const matches = (q.answers ?? []).filter((answer: string) => typed.some((part: string) => part.includes(normalize(answer)) || normalize(answer).includes(part)))
+      const typed = String(current).split(/\r?\n|;/).map((part: string) => normalize(part)).filter(Boolean)
+      const matches = (q.answers ?? []).filter((answer: string) => typed.some((part: string) => part.includes(normalize(answer))))
       return matches.length >= 5
     }
     if (q.type === 'long' || q.type === 'text' || q.type === 'number') {
@@ -247,8 +247,8 @@ export default function App() {
   if (reviewing) {
     const item = allQuestions[reviewIndex]
     const value = answers[item.id]
-    const typedParts = String(value ?? '').split(/[\\n;,.]+/).map((part: string) => normalize(part)).filter(Boolean)
-    const matchedList = item.type === 'textList' ? (item.answers ?? []).filter((answer: string) => typedParts.some((part: string) => part.includes(normalize(answer)) || normalize(answer).includes(part))) : []
+    const typedParts = String(value ?? '').split(/\r?\n|;/).map((part: string) => normalize(part)).filter(Boolean)
+    const matchedList = item.type === 'textList' ? (item.answers ?? []).filter((answer: string) => typedParts.some((part: string) => part.includes(normalize(answer)))) : []
     const isCorrect = item.type === 'single' || item.type === 'image' ? value === item.a : item.type === 'text' || item.type === 'number' ? normalize(String(value ?? '')) === normalize(String(item.a ?? '')) : item.type === 'textList' ? matchedList.length >= 5 : item.type === 'match' || item.type === 'order' ? JSON.stringify(value) === JSON.stringify(item.a) : false
     const answerText = value === undefined || value === '' ? 'Ответ не дан' : item.type === 'single' || item.type === 'image' ? item.opts?.[value] ?? 'Ответ не распознан' : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? value?.[i] ?? '—' : item.choices?.[Number(value?.[i])] ?? '—'}`).join('\\n') : item.type === 'order' ? (value as number[]).map((n, i) => `${i + 1}. ${item.items[n]}`).join('\\n') : String(value)
     const correctText = item.type === 'single' || item.type === 'image' ? item.opts?.[item.a] ?? '—' : item.type === 'text' || item.type === 'number' ? String(item.a ?? '—') : item.type === 'textList' ? (item.answers ?? []).map((answer: string) => `• ${answer}`).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? item.a[i] : item.choices?.[Number(item.a[i])]}`).join('\\n') : item.type === 'order' ? item.a.map((n: number, i: number) => `${i + 1}. ${item.items[n]}`).join('\\n') : '—'
