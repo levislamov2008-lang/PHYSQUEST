@@ -1402,33 +1402,88 @@ button:disabled {
 }
 
 
-/* PHYSQUEST mascot + one-at-a-time answer review */
-.quiz-content-with-mascot { position: relative; }
-.phys-mascot-wrap {
-  position: fixed; left: max(18px, calc((100vw - 1440px) / 2));
-  top: 48%; width: 190px; display: flex; flex-direction: column;
-  align-items: center; z-index: 4; pointer-events: none; transform: translateY(-42%);
+
+/* Balanced quiz layout: mascot lives beside, never over, the answer area */
+.quiz-layout {
+  width: min(1180px, 100%);
+  max-width: 1180px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(22px, 4vw, 54px);
 }
-.phys-mascot { width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 18px 20px rgba(0,0,0,.3)); animation: mascotFloat 3.4s ease-in-out infinite; }
-.mascot-speech { padding: 10px 13px; color: #172019; background: #b6f542; border-radius: 12px 12px 12px 3px; font-size: 11px; line-height: 1.35; font-weight: 900; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
-.mascot-name { margin-top: -4px; color: #b6f542; font: 900 13px 'Barlow Condensed', sans-serif; letter-spacing: 2px; }
-.mascot-name i { color: #89928a; font-style: normal; font-size: 9px; }
-.mascot-active .phys-mascot { animation: mascotCelebrate .55s ease-out, mascotFloat 3.4s .55s ease-in-out infinite; }
-@keyframes mascotFloat { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-9px) rotate(1deg); } }
-@keyframes mascotCelebrate { 0% { transform: scale(.92) rotate(-5deg); } 55% { transform: scale(1.06) rotate(4deg); } 100% { transform: scale(1) rotate(0); } }
-.review-progress-line { display:flex; align-items:center; gap:18px; color:var(--muted); font-size:10px; font-weight:800; letter-spacing:1px; }
-.review-progress-line > div { flex:1; height:5px; overflow:hidden; border-radius:10px; background:var(--surface-light); }
-.review-progress-line i { display:block; height:100%; background:var(--green); border-radius:10px; transition:width .2s ease; }
-.review-navigation { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:8px; }
-.review-navigation > span { color:var(--muted); font-size:12px; font-weight:800; }
-.review-match-count { margin-top:16px; color:var(--green); font-size:10px; font-weight:800; letter-spacing:.7px; }
-.text-list-section { margin-top:22px; }
-@media (min-width: 1500px) { .phys-mascot-wrap { left: calc((100vw - 1280px) / 2 - 210px); } }
-@media (max-width: 1150px) { .phys-mascot-wrap { position:relative; top:auto; left:auto; transform:none; width:150px; margin:0 auto 20px; } .phys-mascot { max-height:210px; } }
+.question-main { min-width: 0; width: 100%; }
+.mascot-side {
+  position: sticky;
+  top: 120px;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 14px 10px 0;
+  pointer-events: none;
+}
+.phys-mascot {
+  display: block;
+  width: min(100%, 205px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 16px 18px rgba(0,0,0,.28));
+  transform-origin: 50% 90%;
+  transition: transform .35s ease;
+}
+.mascot-bubble {
+  position: relative;
+  padding: 9px 14px;
+  border: 1px solid rgba(182,245,66,.25);
+  border-radius: 12px 12px 12px 3px;
+  color: #182019;
+  background: #b6f542;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  box-shadow: 0 7px 20px rgba(0,0,0,.22);
+}
+.mascot-side.mascot-active .phys-mascot { animation: mascotHello .55s ease-out, mascotIdle 3s .55s ease-in-out infinite; }
+.mascot-side:not(.mascot-active) .phys-mascot { animation: mascotIdle 3s ease-in-out infinite; }
+.mascot-pose-0 .phys-mascot { transform: rotate(-2deg) translateY(0); }
+.mascot-pose-1 .phys-mascot { transform: rotate(2deg) translateY(-3px) scale(1.015); }
+.mascot-pose-2 .phys-mascot { transform: rotate(-1deg) translateY(2px) scale(.99); }
+.mascot-pose-3 .phys-mascot { transform: rotate(1.5deg) translateY(-2px); }
+.mascot-pose-1 .mascot-arms { transform: rotate(-4deg); transform-origin: 110px 170px; }
+.mascot-pose-2 .mascot-head { transform: rotate(4deg); transform-origin: 110px 100px; }
+.mascot-pose-3 .mascot-arms { transform: rotate(4deg); transform-origin: 110px 170px; }
+.mascot-arms, .mascot-head, .mascot-legs { transition: transform .3s ease; }
+@keyframes mascotIdle { 0%,100% { translate: 0 0; } 50% { translate: 0 -7px; } }
+@keyframes mascotHello { 0% { transform: scale(.94) rotate(-4deg); } 60% { transform: scale(1.04) rotate(3deg); } 100% { transform: scale(1) rotate(0); } }
+
+/* Numbered answer fields for question 25 */
+.numbered-answer-list { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.numbered-answer-row { display:grid; grid-template-columns:38px minmax(0,1fr); gap:10px; align-items:center; }
+.numbered-answer-row > span {
+  width:36px; height:36px; display:grid; place-items:center;
+  color:#b6f542; background:#252e26; border:1px solid rgba(182,245,66,.24);
+  border-radius:8px; font:800 17px 'Barlow Condensed',sans-serif;
+}
+.numbered-answer-row .answer-input { width:100%; min-width:0; min-height:48px; }
+.text-list-counter { margin-top:12px; color:var(--green); font-size:11px; font-weight:900; letter-spacing:1px; }
+.text-list-section .input-hint { line-height:1.7; }
+
+@media (max-width: 900px) {
+  .quiz-layout { grid-template-columns: minmax(0,1fr); gap:12px; }
+  .mascot-side { position:relative; top:auto; width:100%; padding:0; flex-direction:row; justify-content:center; align-items:center; gap:12px; }
+  .phys-mascot { width:105px; max-height:145px; }
+  .mascot-bubble { max-width:180px; }
+}
 @media (max-width: 600px) {
-  .phys-mascot-wrap { width:112px; margin-bottom:12px; }
-  .mascot-speech { font-size:9px; padding:7px 9px; }
-  .mascot-name { font-size:10px; }
-  .review-navigation { flex-wrap:wrap; }
-  .review-navigation button { min-height:44px; }
+  .mascot-side { margin:0 auto 8px; }
+  .phys-mascot { width:82px; max-height:112px; }
+  .mascot-bubble { padding:7px 10px; font-size:9px; }
+  .numbered-answer-list { gap:8px; }
+  .numbered-answer-row { grid-template-columns:32px minmax(0,1fr); gap:8px; }
+  .numbered-answer-row > span { width:32px; height:34px; }
+  .numbered-answer-row .answer-input { min-height:44px; font-size:12px; }
 }
