@@ -35,6 +35,15 @@ const typeLabels: Record<string, string> = {
   number: 'РАСЧЁТ'
 }
 
+const shuffleQuestions = <T,>(items: T[]): T[] => {
+  const shuffled = [...items]
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 const normalize = (s: string) =>
   s.toLocaleLowerCase('ru')
     .replaceAll('ё', 'е')
@@ -62,6 +71,7 @@ const getTextListMatches = (value: unknown) => {
 
 function GameApp() {
   const [started, setStarted] = useState(false)
+  const [sessionQuestions, setSessionQuestions] = useState<Question[]>([])
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, any>>({})
   const [finished, setFinished] = useState(false)
@@ -71,13 +81,14 @@ function GameApp() {
   const [reviewIndex, setReviewIndex] = useState(0)
 
   const allQuestions = questions as Question[]
-  const total = allQuestions.length
-  const q = allQuestions[index]
+  const activeQuestions = sessionQuestions.length ? sessionQuestions : allQuestions
+  const total = activeQuestions.length
+  const q = activeQuestions[index]
 
   const answered = Object.keys(answers).length
 
   const score = useMemo(() => {
-    return allQuestions.reduce((n: number, item: Question) => {
+    return activeQuestions.reduce((n: number, item: Question) => {
       const v = answers[item.id]
 
       if (v === undefined) return n
@@ -107,7 +118,7 @@ function GameApp() {
 
       return n
     }, 0)
-  }, [answers, allQuestions])
+  }, [answers, activeQuestions])
 
   const setAnswer = (value: any) => {
     setAnswers(prev => ({
@@ -156,7 +167,17 @@ function GameApp() {
     }
   }
 
+  const startTraining = () => {
+    setSessionQuestions(shuffleQuestions(allQuestions))
+    setAnswers({})
+    setIndex(0)
+    setFinished(false)
+    setReviewing(false)
+    setStarted(true)
+  }
+
   const restart = () => {
+    setSessionQuestions([])
     setAnswers({})
     setIndex(0)
     setFinished(false)
@@ -226,7 +247,7 @@ function GameApp() {
 
             <button
               className="primary-button start-button"
-              onClick={() => setStarted(true)}
+              onClick={startTraining}
             >
               НАЧАТЬ ТРЕНИРОВКУ
               <span className="button-arrow">↗</span>
@@ -269,7 +290,7 @@ function GameApp() {
   }
 
   if (reviewing) {
-    const item = allQuestions[reviewIndex]
+    const item = activeQuestions[reviewIndex]
     const value = answers[item.id]
     const matchedList = item.type === 'textList' ? getTextListMatches(value) : 0
     const isCorrect = item.type === 'single' || item.type === 'image' ? value === item.a : item.type === 'text' || item.type === 'number' ? normalize(String(value ?? '')) === normalize(String(item.a ?? '')) : item.type === 'multi' ? Array.isArray(value) && value.length >= 5 && value.every((choice: number) => item.a.includes(choice)) : item.type === 'textList' ? matchedList >= 5 : item.type === 'match' || item.type === 'order' ? JSON.stringify(value) === JSON.stringify(item.a) : false
