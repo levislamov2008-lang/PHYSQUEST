@@ -791,7 +791,7 @@ type UserProfile = {
 }
 
 function AuthScreen() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [nickname, setNickname] = useState('')
@@ -808,7 +808,13 @@ function AuthScreen() {
     setMessage('')
 
     try {
-      if (mode === 'signup') {
+      if (mode === 'reset') {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
+        })
+        if (resetError) throw resetError
+        setMessage('Если для этого адреса есть аккаунт, письмо со ссылкой для смены пароля отправлено. Проверь входящие и папку «Спам».')
+      } else if (mode === 'signup') {
         const cleanNickname = nickname.trim()
         if (cleanNickname.length < 3 || cleanNickname.length > 24) {
           throw new Error('Никнейм должен содержать от 3 до 24 символов.')
@@ -866,14 +872,14 @@ function AuthScreen() {
 
         <form className="auth-card" onSubmit={submit}>
           <div className="auth-tabs">
-            <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError(''); setMessage('') }}>ВХОД</button>
+            <button type="button" className={mode !== 'signup' ? 'active' : ''} onClick={() => { setMode('login'); setError(''); setMessage('') }}>ВХОД</button>
             <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setError(''); setMessage('') }}>РЕГИСТРАЦИЯ</button>
           </div>
 
           <div className="auth-card-heading">
-            <span className="question-type">{mode === 'login' ? 'С ВОЗВРАЩЕНИЕМ' : 'НОВЫЙ ИГРОК'}</span>
-            <h2>{mode === 'login' ? 'Войти в аккаунт' : 'Создать аккаунт'}</h2>
-            <p>{mode === 'login' ? 'Продолжи свой путь в PHYSQUEST.' : 'Заполни данные, чтобы начать.'}</p>
+            <span className="question-type">{mode === 'login' ? 'С ВОЗВРАЩЕНИЕМ' : mode === 'signup' ? 'НОВЫЙ ИГРОК' : 'ВОССТАНОВЛЕНИЕ ДОСТУПА'}</span>
+            <h2>{mode === 'login' ? 'Войти в аккаунт' : mode === 'signup' ? 'Создать аккаунт' : 'Забыли пароль?'}</h2>
+            <p>{mode === 'login' ? 'Продолжи свой путь в PHYSQUEST.' : mode === 'signup' ? 'Заполни данные, чтобы начать.' : 'Укажи почту аккаунта — отправим ссылку для создания нового пароля.'}</p>
           </div>
 
           {mode === 'signup' && (
@@ -889,22 +895,63 @@ function AuthScreen() {
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" required autoComplete="email" />
           </label>
 
-          <label className="auth-field">
+          {mode !== 'reset' && <label className="auth-field">
             <span>ПАРОЛЬ</span>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Не менее 8 символов" minLength={8} required autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
-          </label>
+          </label>}
 
           {error && <div className="auth-feedback auth-error" role="alert">{error}</div>}
           {message && <div className="auth-feedback auth-success" role="status">{message}</div>}
 
           <button className="primary-button auth-submit" type="submit" disabled={busy}>
-            {busy ? 'ПОДОЖДИ…' : mode === 'login' ? 'ВОЙТИ В PHYSQUEST' : 'СОЗДАТЬ АККАУНТ'}
+            {busy ? 'ПОДОЖДИ…' : mode === 'login' ? 'ВОЙТИ В PHYSQUEST' : mode === 'signup' ? 'СОЗДАТЬ АККАУНТ' : 'ОТПРАВИТЬ ССЫЛКУ'}
             <span className="button-arrow">↗</span>
           </button>
-          <p className="auth-legal">Продолжая, ты создаёшь личный аккаунт PHYSQUEST. Пароль хранится в системе авторизации Supabase.</p>
+          {mode === 'login' && <button type="button" className="auth-forgot-button" onClick={() => { setMode('reset'); setError(''); setMessage('') }}>ЗАБЫЛИ ПАРОЛЬ?</button>}
+          {mode === 'reset' && <button type="button" className="auth-forgot-button" onClick={() => { setMode('login'); setError(''); setMessage('') }}>← ВЕРНУТЬСЯ КО ВХОДУ</button>}
+          <p className="auth-legal">Продолжая, ты используешь личный аккаунт PHYSQUEST. Пароль хранится в системе авторизации Supabase.</p>
         </form>
       </section>
       <footer className="landing-footer"><span>PHYSQUEST © 2026</span><span>TRAIN YOUR MIND. TRAIN YOUR BODY.</span></footer>
+    </main>
+  )
+}
+
+function PasswordRecoveryScreen({ onComplete }: { onComplete: () => void }) {
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!supabase) return
+    if (password.length < 8) { setError('Пароль должен содержать не менее 8 символов.'); return }
+    if (password !== confirmPassword) { setError('Пароли не совпадают.'); return }
+    setBusy(true); setError(''); setMessage('')
+    const { error: updateError } = await supabase.auth.updateUser({ password })
+    if (updateError) { setError(updateError.message); setBusy(false); return }
+    setMessage('Пароль изменён. Сейчас вернём тебя на экран входа.')
+    await supabase.auth.signOut()
+    onComplete()
+    setBusy(false)
+  }
+
+  return (
+    <main className="app-shell auth-shell">
+      <header className="topbar"><div className="brand"><div className="brand-icon">P</div><div className="brand-text"><b>PHYS<span>QUEST</span></b><small>ACCOUNT RECOVERY</small></div></div></header>
+      <section className="auth-layout">
+        <div className="auth-intro"><div className="eyebrow"><span className="eyebrow-line" /> ВОССТАНОВЛЕНИЕ ДОСТУПА</div><h1>ВЕРНИСЬ<br /><span>В ИГРУ.</span></h1><p>Придумай новый пароль для своего аккаунта PHYSQUEST.</p></div>
+        <form className="auth-card" onSubmit={submit}>
+          <div className="auth-card-heading"><span className="question-type">НОВЫЙ ПАРОЛЬ</span><h2>Смена пароля</h2><p>Используй не менее 8 символов.</p></div>
+          <label className="auth-field"><span>НОВЫЙ ПАРОЛЬ</span><input type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={8} required autoComplete="new-password" /></label>
+          <label className="auth-field"><span>ПОВТОРИ ПАРОЛЬ</span><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} minLength={8} required autoComplete="new-password" /></label>
+          {error && <div className="auth-feedback auth-error" role="alert">{error}</div>}
+          {message && <div className="auth-feedback auth-success" role="status">{message}</div>}
+          <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? 'СОХРАНЯЕМ…' : 'СОХРАНИТЬ НОВЫЙ ПАРОЛЬ'}<span className="button-arrow">↗</span></button>
+        </form>
+      </section>
     </main>
   )
 }
@@ -914,6 +961,7 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
   const [profileError, setProfileError] = useState('')
+  const [recoveryMode, setRecoveryMode] = useState(false)
 
   useEffect(() => {
     if (!supabase) {
@@ -929,7 +977,8 @@ export default function App() {
       setCheckingSession(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
       setUser(session?.user ?? null)
       if (!session?.user) setProfile(null)
       setProfileError('')
@@ -979,6 +1028,8 @@ export default function App() {
   if (checkingSession) {
     return <main className="app-shell auth-shell"><div className="auth-loading">ПОДКЛЮЧАЕМ PHYSQUEST…</div></main>
   }
+
+  if (recoveryMode && user) return <PasswordRecoveryScreen onComplete={() => setRecoveryMode(false)} />
 
   if (!user) return <AuthScreen />
 
