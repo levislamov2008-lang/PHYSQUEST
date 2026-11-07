@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
-import type { FormEvent, User } from '@supabase/supabase-js'
+import type { FormEvent } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import questions from './questions.json'
 import './index.css'
