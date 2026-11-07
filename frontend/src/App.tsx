@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
-import type { User } from '@supabase/supabase-js'
+import type { FormEvent, User } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import questions from './questions.json'
 import './index.css'
@@ -777,7 +777,7 @@ function AuthScreen() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!supabase) return
 
