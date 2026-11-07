@@ -1,5 +1,7 @@
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
+import { supabase } from './lib/supabase'
 import questions from './questions.json'
 import './index.css'
 import gymnastics from './assets/gymnastics.png'
@@ -57,7 +59,7 @@ const getTextListMatches = (value: unknown) => {
   }).length
 }
 
-export default function App() {
+function GameApp() {
   const [started, setStarted] = useState(false)
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, any>>({})
@@ -755,5 +757,231 @@ export default function App() {
         </button>
       </footer>
     </main>
+  )
+}
+
+
+type UserProfile = {
+  id: string
+  nickname: string
+  role: 'user' | 'admin'
+  visibility: 'public' | 'private'
+}
+
+function AuthScreen() {
+  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!supabase) return
+
+    setBusy(true)
+    setError('')
+    setMessage('')
+
+    try {
+      if (mode === 'signup') {
+        const cleanNickname = nickname.trim()
+        if (cleanNickname.length < 3 || cleanNickname.length > 24) {
+          throw new Error('Никнейм должен содержать от 3 до 24 символов.')
+        }
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { data: { nickname: cleanNickname } },
+        })
+        if (signUpError) throw signUpError
+
+        if (!data.session) {
+          setMessage('Аккаунт создан. Проверь почту и подтверди адрес, затем войди в PHYSQUEST.')
+        } else {
+          setMessage('Регистрация завершена. Добро пожаловать!')
+        }
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+        if (signInError) throw signInError
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось выполнить запрос. Попробуй ещё раз.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <main className="app-shell auth-shell">
+      <header className="topbar">
+        <div className="brand">
+          <div className="brand-icon">P</div>
+          <div className="brand-text">
+            <b>PHYS<span>QUEST</span></b>
+            <small>SPORTS KNOWLEDGE PLATFORM</small>
+          </div>
+        </div>
+        <div className="version-tag"><span className="status-dot" /> PLAYER ACCOUNT</div>
+      </header>
+
+      <section className="auth-layout">
+        <div className="auth-intro">
+          <div className="eyebrow"><span className="eyebrow-line" /> YOUR JOURNEY STARTS HERE</div>
+          <h1>ТВОЙ ПРОГРЕСС.<br /><span>ТВОЯ ИСТОРИЯ.</span></h1>
+          <p>Войди в аккаунт, чтобы проходить уровни, сохранять результаты и собирать награды PHYSQUEST.</p>
+          <div className="auth-feature-list">
+            <div><b>01</b><span>Сохраняй результаты тренировок</span></div>
+            <div><b>02</b><span>Открывай новые уровни и главы</span></div>
+            <div><b>03</b><span>Собирай звёзды и медали</span></div>
+          </div>
+        </div>
+
+        <form className="auth-card" onSubmit={submit}>
+          <div className="auth-tabs">
+            <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError(''); setMessage('') }}>ВХОД</button>
+            <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setError(''); setMessage('') }}>РЕГИСТРАЦИЯ</button>
+          </div>
+
+          <div className="auth-card-heading">
+            <span className="question-type">{mode === 'login' ? 'С ВОЗВРАЩЕНИЕМ' : 'НОВЫЙ ИГРОК'}</span>
+            <h2>{mode === 'login' ? 'Войти в аккаунт' : 'Создать аккаунт'}</h2>
+            <p>{mode === 'login' ? 'Продолжи свой путь в PHYSQUEST.' : 'Заполни данные, чтобы начать.'}</p>
+          </div>
+
+          {mode === 'signup' && (
+            <label className="auth-field">
+              <span>НИКНЕЙМ</span>
+              <input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Например, SportMaster" minLength={3} maxLength={24} required autoComplete="nickname" />
+              <small>От 3 до 24 символов. Никнейм будет виден в профиле.</small>
+            </label>
+          )}
+
+          <label className="auth-field">
+            <span>ЭЛЕКТРОННАЯ ПОЧТА</span>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" required autoComplete="email" />
+          </label>
+
+          <label className="auth-field">
+            <span>ПАРОЛЬ</span>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Не менее 8 символов" minLength={8} required autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
+          </label>
+
+          {error && <div className="auth-feedback auth-error" role="alert">{error}</div>}
+          {message && <div className="auth-feedback auth-success" role="status">{message}</div>}
+
+          <button className="primary-button auth-submit" type="submit" disabled={busy}>
+            {busy ? 'ПОДОЖДИ…' : mode === 'login' ? 'ВОЙТИ В PHYSQUEST' : 'СОЗДАТЬ АККАУНТ'}
+            <span className="button-arrow">↗</span>
+          </button>
+          <p className="auth-legal">Продолжая, ты создаёшь личный аккаунт PHYSQUEST. Пароль хранится в системе авторизации Supabase.</p>
+        </form>
+      </section>
+      <footer className="landing-footer"><span>PHYSQUEST © 2026</span><span>TRAIN YOUR MIND. TRAIN YOUR BODY.</span></footer>
+    </main>
+  )
+}
+
+export default function App() {
+  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [checkingSession, setCheckingSession] = useState(true)
+  const [profileError, setProfileError] = useState('')
+
+  useEffect(() => {
+    if (!supabase) {
+      setCheckingSession(false)
+      return
+    }
+
+    let active = true
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return
+      if (error) setProfileError(error.message)
+      setUser(data.session?.user ?? null)
+      setCheckingSession(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      if (!session?.user) setProfile(null)
+      setProfileError('')
+      setCheckingSession(false)
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!supabase || !user) {
+      setProfile(null)
+      return
+    }
+
+    let active = true
+    setProfile(null)
+    setProfileError('')
+
+    supabase
+      .from('profiles')
+      .select('id, nickname, role, visibility')
+      .eq('id', user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (!active) return
+        if (error) setProfileError(error.message)
+        else setProfile(data as UserProfile)
+      })
+
+    return () => { active = false }
+  }, [user])
+
+  const signOut = async () => {
+    if (!supabase) return
+    const { error } = await supabase.auth.signOut()
+    if (error) setProfileError(error.message)
+  }
+
+  if (!supabase) {
+    return <main className="app-shell auth-shell"><section className="auth-card"><h2>Не настроено подключение</h2><p>Проверь файл frontend/.env.local и перезапусти Vite.</p></section></main>
+  }
+
+  if (checkingSession) {
+    return <main className="app-shell auth-shell"><div className="auth-loading">ПОДКЛЮЧАЕМ PHYSQUEST…</div></main>
+  }
+
+  if (!user) return <AuthScreen />
+
+  if (!profile) {
+    return (
+      <main className="app-shell auth-shell">
+        <section className="auth-card auth-profile-wait">
+          <div className="brand-icon">P</div>
+          <h2>{profileError ? 'Не удалось загрузить профиль' : 'Загружаем твой профиль…'}</h2>
+          <p>{profileError || 'Проверяем аккаунт PHYSQUEST.'}</p>
+          {profileError && <button className="secondary-button" onClick={signOut}>ВЫЙТИ И ПОВТОРИТЬ</button>}
+        </section>
+      </main>
+    )
+  }
+
+  return (
+    <>
+      <div className="account-chip">
+        <span className="account-status-dot" />
+        <span className="account-nickname">{profile.nickname}</span>
+        {profile.role === 'admin' && <span className="account-role">ADMIN</span>}
+        <button onClick={signOut}>ВЫЙТИ</button>
+      </div>
+      <GameApp />
+    </>
   )
 }
