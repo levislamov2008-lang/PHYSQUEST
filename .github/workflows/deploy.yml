@@ -34,7 +34,7 @@ jobs:
         working-directory: frontend
         env:
           VITE_SUPABASE_URL: https://ybhgnojjnwhycwlhaays.supabase.co
-          VITE_SUPABASE_ANON_KEY: sb_publishable_mq0HHqRbpsZlhguu5M7UE_1VBC-hFv
+          VITE_SUPABASE_ANON_KEY: sb_publishable_mq0HHqRbpsZlhguu5M7UEg_1VBC-hFv
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
