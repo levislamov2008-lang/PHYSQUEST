@@ -245,12 +245,13 @@ function GameApp({ userId }: { userId: string }) {
             <h1>МИР <span>PHYSQUEST</span></h1>
             <p>Проходи уровни один за другим, открывай новые испытания и собирай награды за знания.</p>
           </div>
-          <div className="world-progress-card"><span>ТВОЙ ПРОГРЕСС</span><strong>{totalCompleted} <small>/ {levels.length}</small></strong><div className="world-progress-track"><i /></div><small>Уровней пройдено</small></div>
+          <div className="world-progress-card"><span>ТВОЙ ПРОГРЕСС</span><strong>{totalCompleted} <small>/ {levels.length}</small></strong><div className="world-progress-track"><i style={{ width: `${levels.length ? (totalCompleted / levels.length) * 100 : 0}%` }} /></div><small>Уровней пройдено</small></div>
         </section>
         <section className="island-map" aria-label="Карта глав и уровней">
           <div className="map-route-line" />
           {mapLoading && <div className="world-map-message">ЗАГРУЖАЕМ ТВОИ ГЛАВЫ И ПРОГРЕСС…</div>}
           {mapError && <div className="world-map-message world-map-error">Не удалось загрузить карту: {mapError}</div>}
+          {!mapLoading && !mapError && chapters.length === 0 && <div className="world-map-message">ПОКА НЕТ ОПУБЛИКОВАННЫХ ГЛАВ</div>}
           {!mapLoading && !mapError && chapters.map((chapter, chapterIndex) => {
             const chapterLevels = levels.filter(level => level.chapter_id === chapter.id)
             const chapterCompleted = chapterLevels.filter(level => completedNumbers.has(level.level_number)).length
@@ -276,7 +277,7 @@ function GameApp({ userId }: { userId: string }) {
           })}
         </section>
         <section className="world-bottom">
-          <div className="world-note"><span className="world-note-icon">i</span><div><b>Путь открывается постепенно</b><p>Следующий уровень станет доступен после успешного прохождения предыдущего. Для запуска полноценной карты ещё нужно загрузить вопросы заказчика в базу.</p></div></div>
+          <div className="world-note"><span className="world-note-icon">i</span><div><b>Путь открывается постепенно</b><p>Следующий уровень станет доступен после успешного прохождения предыдущего. Сейчас карта показывает главы и прогресс из аккаунта. Игровые уровни подключим после загрузки и распределения вопросов.</p></div></div>
           <button className="secondary-button world-demo-button" onClick={startTraining}>ОТКРЫТЬ ДЕМО-ТРЕНИРОВКУ <span>↗</span></button>
         </section>
         <footer className="landing-footer"><span>PHYSQUEST © 2026</span><span>TRAIN YOUR MIND. TRAIN YOUR BODY.</span></footer>
