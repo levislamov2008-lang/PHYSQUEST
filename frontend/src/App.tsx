@@ -68,7 +68,42 @@ const getTextListMatches = (value: unknown) => {
   }).length
 }
 
-function GameApp() {
+type ChapterRow = { id: string; chapter_number: number; title: string; description: string | null; medal_name: string }
+type LevelRow = { id: string; chapter_id: string; level_number: number; title: string; is_final_challenge: boolean; question_count: number; pass_percent: number }
+type ProgressRow = { level_id: string; is_unlocked: boolean; best_percent: number; best_stars: number; completed_at: string | null }
+
+function GameApp({ userId }: { userId: string }) {
+  const [chapters, setChapters] = useState<ChapterRow[]>([])
+  const [levels, setLevels] = useState<LevelRow[]>([])
+  const [levelProgress, setLevelProgress] = useState<ProgressRow[]>([])
+  const [mapLoading, setMapLoading] = useState(true)
+  const [mapError, setMapError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    const loadMap = async () => {
+      if (!supabase) return
+      setMapLoading(true)
+      setMapError('')
+      const [chapterResult, levelResult, progressResult] = await Promise.all([
+        supabase.from('chapters').select('id,chapter_number,title,description,medal_name').eq('is_published', true).order('chapter_number'),
+        supabase.from('levels').select('id,chapter_id,level_number,title,is_final_challenge,question_count,pass_percent').eq('is_published', true).order('level_number'),
+        supabase.from('user_level_progress').select('level_id,is_unlocked,best_percent,best_stars,completed_at').eq('user_id', userId)
+      ])
+      if (!active) return
+      const firstError = chapterResult.error || levelResult.error || progressResult.error
+      if (firstError) setMapError(firstError.message)
+      else {
+        setChapters((chapterResult.data ?? []) as ChapterRow[])
+        setLevels((levelResult.data ?? []) as LevelRow[])
+        setLevelProgress((progressResult.data ?? []) as ProgressRow[])
+      }
+      setMapLoading(false)
+    }
+    void loadMap()
+    return () => { active = false }
+  }, [userId])
+
   const [started, setStarted] = useState(false)
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([])
   const [index, setIndex] = useState(0)
@@ -191,11 +226,14 @@ function GameApp() {
   }
 
   if (!started) {
-    const chapters = [
-      { number: 1, title: 'Первые шаги', description: 'Знакомство с миром PHYSQUEST', medal: 'Медаль первооткрывателя', tone: 'lime' },
-      { number: 2, title: 'Путь чемпиона', description: 'Новые испытания и более сложные вопросы', medal: 'Медаль чемпиона', tone: 'blue' },
-      { number: 3, title: 'На пределе', description: 'Проверка знаний на новом уровне', medal: 'Медаль мастера', tone: 'violet' }
-    ]
+    const progressByLevel = new Map(levelProgress.map(item => [item.level_id, item]))
+    const completedNumbers = new Set(levels.filter(level => {
+      const progress = progressByLevel.get(level.id)
+      return Boolean(progress?.completed_at || (progress?.best_stars ?? 0) > 0)
+    }).map(level => level.level_number))
+    const firstIncomplete = levels.find(level => !completedNumbers.has(level.level_number))?.level_number ?? null
+    const totalCompleted = completedNumbers.size
+    const tones = ['lime', 'blue', 'violet']
     return (
       <main className="app-shell world-shell">
         <header className="topbar world-topbar">
@@ -207,20 +245,35 @@ function GameApp() {
             <h1>МИР <span>PHYSQUEST</span></h1>
             <p>Проходи уровни один за другим, открывай новые испытания и собирай награды за знания.</p>
           </div>
-          <div className="world-progress-card"><span>ТВОЙ ПРОГРЕСС</span><strong>0 <small>/ 60</small></strong><div className="world-progress-track"><i /></div><small>Уровней пройдено</small></div>
+          <div className="world-progress-card"><span>ТВОЙ ПРОГРЕСС</span><strong>{totalCompleted} <small>/ {levels.length}</small></strong><div className="world-progress-track"><i /></div><small>Уровней пройдено</small></div>
         </section>
         <section className="island-map" aria-label="Карта глав и уровней">
           <div className="map-route-line" />
-          {chapters.map((chapter, chapterIndex) => (
-            <article className={`chapter-island island-${chapter.tone}`} key={chapter.number}>
-              <div className="island-art"><div className="island-orbit" /><div className="island-core"><span>0{chapter.number}</span><b>{chapter.number === 1 ? '✦' : chapter.number === 2 ? '♜' : '♛'}</b></div><span className="island-spark spark-one">✦</span><span className="island-spark spark-two">✧</span></div>
-              <div className="island-info"><div className="island-kicker">ГЛАВА 0{chapter.number}</div><h2>{chapter.title}</h2><p>{chapter.description}</p>
-                <div className="island-levels" aria-label="20 уровней главы">{Array.from({length:20},(_,i)=><span key={i} className={i===0&&chapterIndex===0?'level-node level-node-current':'level-node level-node-locked'}>{i+1}</span>)}</div>
-                <div className="island-footer"><span>20 УРОВНЕЙ</span><span className="island-medal">◇ {chapter.medal}</span></div>
-                <div className="island-status">{chapterIndex===0?'КОНТЕНТ ГОТОВИТСЯ':'ЗАКРЫТА'}</div>
-              </div>
-            </article>
-          ))}
+          {mapLoading && <div className="world-map-message">ЗАГРУЖАЕМ ТВОИ ГЛАВЫ И ПРОГРЕСС…</div>}
+          {mapError && <div className="world-map-message world-map-error">Не удалось загрузить карту: {mapError}</div>}
+          {!mapLoading && !mapError && chapters.map((chapter, chapterIndex) => {
+            const chapterLevels = levels.filter(level => level.chapter_id === chapter.id)
+            const chapterCompleted = chapterLevels.filter(level => completedNumbers.has(level.level_number)).length
+            const chapterUnlocked = chapterLevels.some(level => {
+              const progress = progressByLevel.get(level.id)
+              return progress?.is_unlocked || level.level_number === firstIncomplete || completedNumbers.has(level.level_number)
+            })
+            return (
+              <article className={`chapter-island island-${tones[chapterIndex % tones.length]}`} key={chapter.id}>
+                <div className="island-art"><div className="island-orbit" /><div className="island-core"><span>0{chapter.chapter_number}</span><b>{chapterIndex === 0 ? '✦' : chapterIndex === 1 ? '♜' : '♛'}</b></div><span className="island-spark spark-one">✦</span><span className="island-spark spark-two">✧</span></div>
+                <div className="island-info"><div className="island-kicker">ГЛАВА 0{chapter.chapter_number}</div><h2>{chapter.title}</h2><p>{chapter.description || 'Новые спортивные испытания и вопросы на знания.'}</p>
+                  <div className="island-levels" aria-label={`${chapterLevels.length} уровней главы`}>{chapterLevels.map(level => {
+                    const progress = progressByLevel.get(level.id)
+                    const isCompleted = completedNumbers.has(level.level_number)
+                    const isUnlocked = Boolean(progress?.is_unlocked || level.level_number === firstIncomplete || isCompleted)
+                    return <span key={level.id} title={`${level.title} · ${isCompleted ? `${progress?.best_stars ?? 0} ★` : isUnlocked ? 'Доступен' : 'Закрыт'}`} className={`level-node ${isCompleted ? 'level-node-complete' : isUnlocked ? 'level-node-current' : 'level-node-locked'}`}>{level.level_number % 20 || 20}</span>
+                  })}</div>
+                  <div className="island-footer"><span>{chapterCompleted}/{chapterLevels.length} ПРОЙДЕНО</span><span className="island-medal">◇ {chapter.medal_name}</span></div>
+                  <div className="island-status">{chapterUnlocked ? 'ПЕРВЫЙ ДОСТУПНЫЙ УРОВЕНЬ' : 'ЗАКРЫТА'}</div>
+                </div>
+              </article>
+            )
+          })}
         </section>
         <section className="world-bottom">
           <div className="world-note"><span className="world-note-icon">i</span><div><b>Путь открывается постепенно</b><p>Следующий уровень станет доступен после успешного прохождения предыдущего. Для запуска полноценной карты ещё нужно загрузить вопросы заказчика в базу.</p></div></div>
@@ -996,7 +1049,7 @@ export default function App() {
         {profile.role === 'admin' && <span className="account-role">ADMIN</span>}
         <button onClick={signOut}>ВЫЙТИ</button>
       </div>
-      <GameApp />
+      <GameApp userId={user.id} />
     </>
   )
 }
