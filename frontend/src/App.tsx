@@ -32,7 +32,6 @@ const typeLabels: Record<string, string> = {
   order: 'ПОРЯДОК ДЕЙСТВИЙ',
   long: 'РАЗВЁРНУТЫЙ ОТВЕТ',
   multi: 'ВЫБЕРИ ПРАВИЛЬНЫЕ ВАРИАНТЫ',
-  number: 'РАСЧЁТ'
 }
 
 const shuffleQuestions = <T,>(items: T[]): T[] => {
@@ -80,7 +79,7 @@ function GameApp() {
   const [activeChoiceRow, setActiveChoiceRow] = useState<number | null>(null)
   const [reviewIndex, setReviewIndex] = useState(0)
 
-  const allQuestions = questions as Question[]
+  const allQuestions = (questions as Question[]).filter(item => item.type !== 'number')
   const activeQuestions = sessionQuestions.length ? sessionQuestions : allQuestions
   const total = activeQuestions.length
   const q = activeQuestions[index]
@@ -104,7 +103,7 @@ function GameApp() {
         return n + (getTextListMatches(v) >= 5 ? 1 : 0)
       }
 
-      if (item.type === 'text' || item.type === 'number') {
+      if (item.type === 'text') {
         return n + (
           normalize(String(v)) === normalize(String(item.a)) ? 1 : 0
         )
@@ -148,7 +147,7 @@ function GameApp() {
     if (q.type === 'textList') {
       return getTextListMatches(current) >= 5
     }
-    if (q.type === 'long' || q.type === 'text' || q.type === 'number') {
+    if (q.type === 'long' || q.type === 'text') {
       return String(current).trim().length > 0
     }
 
@@ -236,9 +235,9 @@ function GameApp() {
     const item = activeQuestions[reviewIndex]
     const value = answers[item.id]
     const matchedList = item.type === 'textList' ? getTextListMatches(value) : 0
-    const isCorrect = item.type === 'single' || item.type === 'image' ? value === item.a : item.type === 'text' || item.type === 'number' ? normalize(String(value ?? '')) === normalize(String(item.a ?? '')) : item.type === 'multi' ? Array.isArray(value) && value.length >= 5 && value.every((choice: number) => item.a.includes(choice)) : item.type === 'textList' ? matchedList >= 5 : item.type === 'match' || item.type === 'order' ? JSON.stringify(value) === JSON.stringify(item.a) : false
+    const isCorrect = item.type === 'single' || item.type === 'image' ? value === item.a : item.type === 'text' ? normalize(String(value ?? '')) === normalize(String(item.a ?? '')) : item.type === 'multi' ? Array.isArray(value) && value.length >= 5 && value.every((choice: number) => item.a.includes(choice)) : item.type === 'textList' ? matchedList >= 5 : item.type === 'match' || item.type === 'order' ? JSON.stringify(value) === JSON.stringify(item.a) : false
     const answerText = value === undefined || value === '' ? 'Ответ не дан' : item.type === 'single' || item.type === 'image' ? item.opts?.[value] ?? 'Ответ не распознан' : item.type === 'multi' ? (value as number[]).map((n) => item.opts[n]).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? value?.[i] ?? '—' : item.choices?.[Number(value?.[i])] ?? '—'}`).join('\\n') : item.type === 'order' ? (value as number[]).map((n, i) => `${i + 1}. ${item.items[n]}`).join('\\n') : String(value)
-    const correctText = item.type === 'single' || item.type === 'image' ? item.opts?.[item.a] ?? '—' : item.type === 'multi' ? item.a.map((n: number) => item.opts[n]).join('\\n') : item.type === 'text' || item.type === 'number' ? String(item.a ?? '—') : item.type === 'textList' ? (item.answers ?? []).map((answer: string, i: number) => `${i + 1}. ${answer}`).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? item.a[i] : item.choices?.[Number(item.a[i])]}`).join('\\n') : item.type === 'order' ? item.a.map((n: number, i: number) => `${i + 1}. ${item.items[n]}`).join('\\n') : '—'
+    const correctText = item.type === 'single' || item.type === 'image' ? item.opts?.[item.a] ?? '—' : item.type === 'multi' ? item.a.map((n: number) => item.opts[n]).join('\\n') : item.type === 'text' ? String(item.a ?? '—') : item.type === 'textList' ? (item.answers ?? []).map((answer: string, i: number) => `${i + 1}. ${answer}`).join('\\n') : item.type === 'match' ? item.pairs.map((pair: string[], i: number) => `${pair[0]} — ${item.id === 28 ? item.a[i] : item.choices?.[Number(item.a[i])]}`).join('\\n') : item.type === 'order' ? item.a.map((n: number, i: number) => `${i + 1}. ${item.items[n]}`).join('\\n') : '—'
     return (
       <main className="app-shell review-shell">
         <header className="topbar">
@@ -529,15 +528,15 @@ function GameApp() {
           </div>
         )}
 
-        {(q.type === 'text' || q.type === 'number') && (
+        {q.type === 'text' && (
           <div className="input-section">
             <label>
-              {q.type === 'number' ? 'ВВЕДИ ЧИСЛОВОЙ ОТВЕТ' : 'ТВОЙ ОТВЕТ'}
+              ТВОЙ ОТВЕТ
             </label>
 
             <input
               className="answer-input"
-              placeholder={q.type === 'number' ? 'Например, 144' : 'Введи свой ответ...'}
+              placeholder="Введи свой ответ..."
               value={current ?? ''}
               onChange={e => setAnswer(e.target.value)}
             />
