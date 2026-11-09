@@ -192,99 +192,42 @@ function GameApp() {
   }
 
   if (!started) {
+    const chapters = [
+      { number: 1, title: 'Первые шаги', description: 'Знакомство с миром PHYSQUEST', medal: 'Медаль первооткрывателя', tone: 'lime' },
+      { number: 2, title: 'Путь чемпиона', description: 'Новые испытания и более сложные вопросы', medal: 'Медаль чемпиона', tone: 'blue' },
+      { number: 3, title: 'На пределе', description: 'Проверка знаний на новом уровне', medal: 'Медаль мастера', tone: 'violet' }
+    ]
     return (
-      <main className="app-shell landing-shell">
-        <header className="topbar">
-          <div className="brand">
-            <div className="brand-icon">P</div>
-            <div className="brand-text">
-              <b>PHYS<span>QUEST</span></b>
-              <small>SPORTS KNOWLEDGE PLATFORM</small>
-            </div>
-          </div>
-
-          <div className="version-tag">
-            <span className="status-dot" />
-            ONLINE TRAINING
-          </div>
+      <main className="app-shell world-shell">
+        <header className="topbar world-topbar">
+          <div className="brand"><div className="brand-icon">P</div><div className="brand-text"><b>PHYS<span>QUEST</span></b><small>МИР ЗНАНИЙ И СПОРТА</small></div></div>
+          <div className="world-header-meta"><span className="world-online-dot" /> ТВОЯ КАРТА ПРИКЛЮЧЕНИЙ</div>
         </header>
-
-        <section className="hero">
-          <div className="hero-content">
-            <div className="eyebrow">
-              <span className="eyebrow-line" />
-              YOUR NEXT CHALLENGE
-            </div>
-
-            <h1>
-              ТВОЯ СИЛА —
-              <br />
-              <span>ТВОИ ЗНАНИЯ.</span>
-            </h1>
-
-            <p className="hero-description">
-              Проверь свои знания о спорте.
-              Выполняй задания, зарабатывай XP
-              и совершенствуй свой результат.
-            </p>
-
-            <div className="hero-stats">
-              <div className="stat-card">
-                <strong>{total}</strong>
-                <span>ВОПРОСОВ</span>
-              </div>
-
-              <div className="stat-card">
-                <strong>+XP</strong>
-                <span>ЗА ОТВЕТЫ</span>
-              </div>
-
-              <div className="stat-card">
-                <strong>01</strong>
-                <span>ТРЕНИРОВКА</span>
-              </div>
-            </div>
-
-            <button
-              className="primary-button start-button"
-              onClick={startTraining}
-            >
-              НАЧАТЬ ТРЕНИРОВКУ
-              <span className="button-arrow">↗</span>
-            </button>
-
-            <div className="hero-hint">
-              <span>●</span> ГОТОВ К НОВОМУ ВЫЗОВУ?
-            </div>
+        <section className="world-heading">
+          <div><div className="eyebrow"><span className="eyebrow-line" /> ТВОЙ ПУТЬ НАЧИНАЕТСЯ ЗДЕСЬ</div>
+            <h1>МИР <span>PHYSQUEST</span></h1>
+            <p>Проходи уровни один за другим, открывай новые испытания и собирай награды за знания.</p>
           </div>
-
-          <div className="hero-visual">
-            <div className="visual-circle">
-              <div className="visual-inner">
-                <span className="visual-number">01</span>
-                <span className="visual-caption">PUSH YOUR LIMITS</span>
-              </div>
-            </div>
-
-            <div className="visual-label label-top">
-              <span>PHYSQUEST</span>
-              <b>EST. 2026</b>
-            </div>
-
-            <div className="visual-label label-bottom">
-              <b>MOVE</b>
-              <b>THINK</b>
-              <b>WIN<span>.</span></b>
-            </div>
-
-            <div className="visual-plus">+</div>
-          </div>
+          <div className="world-progress-card"><span>ТВОЙ ПРОГРЕСС</span><strong>0 <small>/ 60</small></strong><div className="world-progress-track"><i /></div><small>Уровней пройдено</small></div>
         </section>
-
-        <footer className="landing-footer">
-          <span>PHYSQUEST © 2026</span>
-          <span>TRAIN YOUR MIND. TRAIN YOUR BODY.</span>
-        </footer>
+        <section className="island-map" aria-label="Карта глав и уровней">
+          <div className="map-route-line" />
+          {chapters.map((chapter, chapterIndex) => (
+            <article className={`chapter-island island-${chapter.tone}`} key={chapter.number}>
+              <div className="island-art"><div className="island-orbit" /><div className="island-core"><span>0{chapter.number}</span><b>{chapter.number === 1 ? '✦' : chapter.number === 2 ? '♜' : '♛'}</b></div><span className="island-spark spark-one">✦</span><span className="island-spark spark-two">✧</span></div>
+              <div className="island-info"><div className="island-kicker">ГЛАВА 0{chapter.number}</div><h2>{chapter.title}</h2><p>{chapter.description}</p>
+                <div className="island-levels" aria-label="20 уровней главы">{Array.from({length:20},(_,i)=><span key={i} className={i===0&&chapterIndex===0?'level-node level-node-current':'level-node level-node-locked'}>{i+1}</span>)}</div>
+                <div className="island-footer"><span>20 УРОВНЕЙ</span><span className="island-medal">◇ {chapter.medal}</span></div>
+                <div className="island-status">{chapterIndex===0?'КОНТЕНТ ГОТОВИТСЯ':'ЗАКРЫТА'}</div>
+              </div>
+            </article>
+          ))}
+        </section>
+        <section className="world-bottom">
+          <div className="world-note"><span className="world-note-icon">i</span><div><b>Путь открывается постепенно</b><p>Следующий уровень станет доступен после успешного прохождения предыдущего. Для запуска полноценной карты ещё нужно загрузить вопросы заказчика в базу.</p></div></div>
+          <button className="secondary-button world-demo-button" onClick={startTraining}>ОТКРЫТЬ ДЕМО-ТРЕНИРОВКУ <span>↗</span></button>
+        </section>
+        <footer className="landing-footer"><span>PHYSQUEST © 2026</span><span>TRAIN YOUR MIND. TRAIN YOUR BODY.</span></footer>
       </main>
     )
   }
