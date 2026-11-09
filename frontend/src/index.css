@@ -1747,3 +1747,51 @@ button:disabled {
   .account-chip { top: 10px; right: 10px; padding: 7px 9px; }
   .account-nickname { max-width: 95px; }
 }
+
+
+/* PHYSQUEST world map */
+.world-shell { padding-bottom: 34px; background: radial-gradient(ellipse at 18% 40%, rgba(182,245,66,.08), transparent 32%), radial-gradient(ellipse at 82% 72%, rgba(94,129,255,.08), transparent 30%), var(--bg); }
+.world-topbar { min-height: 84px; }
+.world-header-meta { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:10px; font-weight:800; letter-spacing:1.5px; }
+.world-online-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 12px var(--green); }
+.world-heading { display:flex; justify-content:space-between; align-items:end; gap:28px; padding:54px 0 34px; }
+.world-heading h1 { margin:12px 0 8px; font-family:'Barlow Condensed',sans-serif; font-size:clamp(42px,6vw,72px); line-height:.95; letter-spacing:-1px; }
+.world-heading h1 span { color:var(--green); }
+.world-heading p { max-width:580px; color:var(--muted); line-height:1.7; font-size:14px; }
+.world-progress-card { min-width:190px; padding:18px 20px; border:1px solid var(--border); border-radius:16px; background:rgba(255,255,255,.035); display:flex; flex-direction:column; gap:8px; }
+.world-progress-card>span,.world-progress-card>small { color:var(--muted); font-size:9px; font-weight:800; letter-spacing:1.2px; }
+.world-progress-card strong { font:800 34px 'Barlow Condensed',sans-serif; }
+.world-progress-card strong small { color:var(--muted); font:600 15px Inter,sans-serif; }
+.world-progress-track { height:5px; background:rgba(255,255,255,.09); border-radius:9px; overflow:hidden; }
+.world-progress-track i { display:block; width:0; height:100%; background:var(--green); }
+.island-map { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; padding:18px 0 24px; }
+.map-route-line { position:absolute; left:14%; right:14%; top:112px; border-top:1px dashed rgba(255,255,255,.17); }
+.chapter-island { position:relative; z-index:1; min-width:0; overflow:hidden; border:1px solid var(--border); border-radius:20px; padding:20px; background:linear-gradient(155deg,rgba(255,255,255,.055),rgba(255,255,255,.018)); box-shadow:0 16px 45px rgba(0,0,0,.18); }
+.island-art { height:150px; position:relative; display:grid; place-items:center; }
+.island-orbit { position:absolute; width:132px; height:132px; border-radius:50%; border:1px solid rgba(255,255,255,.15); box-shadow:0 0 40px rgba(182,245,66,.08),inset 0 0 30px rgba(255,255,255,.035); }
+.island-core { width:104px; height:104px; border-radius:34px; transform:rotate(-8deg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; background:linear-gradient(145deg,#c7ff65,#719c29); color:#15200b; box-shadow:0 12px 35px rgba(182,245,66,.2); }
+.island-core span { font:900 12px Inter,sans-serif; opacity:.7; }
+.island-core b { font-size:38px; line-height:1.1; }
+.island-blue .island-core { background:linear-gradient(145deg,#9bb6ff,#526fc7); color:#111a35; box-shadow:0 12px 35px rgba(94,129,255,.2); }
+.island-violet .island-core { background:linear-gradient(145deg,#d2a6ff,#8052c7); color:#24123b; box-shadow:0 12px 35px rgba(164,94,255,.2); }
+.island-spark { position:absolute; color:var(--green); font-size:18px; }
+.spark-one { top:24px; right:22%; }.spark-two { bottom:20px; left:22%; opacity:.6; }
+.island-kicker { color:var(--green); font-size:9px; font-weight:900; letter-spacing:1.7px; }
+.island-blue .island-kicker { color:#9bb6ff; }.island-violet .island-kicker { color:#d2a6ff; }
+.island-info h2 { margin:8px 0 6px; font:800 27px 'Barlow Condensed',sans-serif; }
+.island-info p { min-height:40px; color:var(--muted); font-size:12px; line-height:1.6; }
+.island-levels { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:6px; margin:18px 0 14px; }
+.level-node { display:grid; place-items:center; aspect-ratio:1; border-radius:8px; font-size:9px; font-weight:800; }
+.level-node-current { background:var(--green); color:#14200a; box-shadow:0 0 16px rgba(182,245,66,.2); }
+.level-node-locked { background:rgba(255,255,255,.055); color:#687066; border:1px solid rgba(255,255,255,.04); }
+.island-footer { display:flex; justify-content:space-between; align-items:center; gap:8px; padding-top:12px; border-top:1px solid var(--border); color:var(--muted); font-size:8px; font-weight:800; letter-spacing:.8px; }
+.island-medal { text-align:right; letter-spacing:0; text-transform:none; }
+.island-status { margin-top:14px; padding:10px; text-align:center; border-radius:9px; background:rgba(255,255,255,.045); color:var(--muted); font-size:9px; font-weight:900; letter-spacing:1.1px; }
+.island-lime .island-status { color:var(--green); background:rgba(182,245,66,.07); }
+.world-bottom { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:18px 20px; border:1px solid var(--border); border-radius:16px; background:rgba(255,255,255,.025); }
+.world-note { display:flex; align-items:flex-start; gap:12px; max-width:720px; }
+.world-note-icon { display:grid; place-items:center; flex:0 0 25px; height:25px; border-radius:50%; background:rgba(182,245,66,.12); color:var(--green); font-weight:900; }
+.world-note b { font-size:12px; }.world-note p { margin-top:5px; color:var(--muted); font-size:11px; line-height:1.6; }
+.world-demo-button { white-space:nowrap; }.world-demo-button span { margin-left:12px; color:var(--green); }
+@media(max-width:900px) { .island-map { grid-template-columns:1fr; max-width:620px; margin:auto; }.map-route-line { display:none; }.chapter-island { display:grid; grid-template-columns:150px 1fr; gap:12px; }.island-art { height:100%; min-height:180px; }.world-heading { align-items:start; flex-direction:column; }.world-progress-card { width:100%; } }
+@media(max-width:560px) { .world-shell { padding-left:5%; padding-right:5%; }.world-header-meta { font-size:8px; letter-spacing:.7px; }.chapter-island { grid-template-columns:1fr; }.island-art { min-height:140px; }.world-bottom { align-items:stretch; flex-direction:column; }.world-demo-button { width:100%; }.island-levels { grid-template-columns:repeat(10,minmax(0,1fr)); } }
